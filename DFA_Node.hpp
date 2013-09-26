@@ -9,8 +9,9 @@ using namespace boost::icl;
 class DFA_Node {
 
   friend class DFA_Graph;
+  friend class Run_Finder;
 
-private:
+protected:
   typedef interval_map < Gap, DFA_Node * > Edges;
   typedef Edges :: iterator Edge_iterator;
   typedef Edges :: const_iterator Const_Edge_iterator;
@@ -25,6 +26,9 @@ private:
                                 // this state.  If a DFA in this state
                                 // goes longer than this without
                                 // adding a burst, then its run is terminated and it is destroyed.
+  unsigned long long node_id;   // for internal use; unique
+
+  static unsigned long long get_unique_node_id(); // for internal use
 
 public:  
   DFA_Node(unsigned int depth);
@@ -39,7 +43,7 @@ public:
 
   Gap get_max_age();
 
-  Tag_ID get_id();
+  Tag_ID get_ID();
 
   void dump(ostream & os, string indent = "", string indent_change = "   ");
     

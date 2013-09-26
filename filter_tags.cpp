@@ -193,7 +193,7 @@ main (int argc, char **argv) {
 
     // set options and parameters
 
-    Tag_Database tag_db (tagdb_filename);
+    Tag_Database tag_db(tagdb_filename);
 
     // Freq_Setting needs to know the set of nominal frequencies
     Freq_Setting::set_nominal_freqs(tag_db.get_nominal_freqs());

@@ -23,13 +23,13 @@ public:
   //  ~Run_Foray ();
 
   void start();
+  Tag_Database tags; // registered tags on all known nominal frequencies
 
 protected:
   static const int MAX_ANT_CODE_SIZE = 5; // max size (chars) of a lotek antenna code
   static const int MAX_CODESET_SIZE = 32; // max size (chars) of a lotek codeset id
   // settings
 
-  Tag_Database tags; // registered tags on all known nominal frequencies
   std::istream * data; // stream from which data records are read
   std::ostream * out;  // stream to which tag ID hits are output 
 

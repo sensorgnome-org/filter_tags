@@ -4,8 +4,17 @@
 #include "filter_tags_common.hpp"
 
 #include "DFA_Node.hpp"
+#include "Known_Tag.hpp"
 
 #include <vector>
+#include <unordered_set>
+#include <unordered_map>
+
+// a type to map sets of tag Ids to DFA nodes
+typedef std::map < Tag_ID_Set, DFA_Node * > Node_Map;
+
+// a type to map individual tag IDs to Known Tags
+typedef std::unordered_map < Tag_ID, Known_Tag * > Tag_Map;
 
 class DFA_Graph {
   // the graph representing a DFA for recognizing sequences of
@@ -20,12 +29,14 @@ class DFA_Graph {
 
   // So there is one DFA_Graph per (Nominal Frequency, Lotek tag ID) pair.
 
+  // The Run_Finder class gets access to the root and sets of nodes at each depth.
+
+  friend class Run_Finder;
+
 public:
 
-  typedef std::map < Tag_ID_Set, DFA_Node * > Node_For_IDs;
-  
 
-private:
+protected:
   // the max depth of this graph
   
   unsigned int max_depth;
@@ -34,25 +45,28 @@ private:
 
   DFA_Node * root;
 
-  // For each depth, a map from sets of tag IDs to DFA_Node
-  // this is only used in constructing the tree, but we don't
-  // bother deleting.
+  // at each depth, there is a map from sets of tag IDs
+  // to nodes
 
-  std::vector < Node_For_IDs > node_for_set_at_depth;
+
+  // For each depth, the nodes are in a Node_Map, indexed
+  // by Tag_ID_Set
+  // These are collected into a vector, indexed by depth.
+  std::vector < Node_Map > N;
+
+  // The set of tags indexed by tag ID
+
+  Tag_Map tags;
 
 public:
 
-  DFA_Graph(unsigned int max_depth);
+  DFA_Graph(unsigned int max_depth=0);
 
-  void add_tag_to_root (Tag_ID &t); // add a tag to the root of this graph
+  void add_tag (Known_Tag *t); // add a tag to this graph's tag set and root node
+
+  void setup_root();
 
   DFA_Node *get_root();
-
-  // iterators for nodes at each depth
-
-  Node_For_IDs :: const_iterator begin_nodes_at_depth (unsigned int depth);
-
-  Node_For_IDs :: const_iterator end_nodes_at_depth (unsigned int depth);
 
   // grow the DFA_Graph from a node via an interval_map; edges are added
   // between the specified node and (possibly new nodes) at the specified
@@ -60,8 +74,6 @@ public:
   // in an interval_map.
 
   void grow(DFA_Node *p, interval_map < Gap, Tag_ID_Set > &s, unsigned int depth);
-
-  std::vector < Node_For_IDs > & get_node_for_set_at_depth();
 };
 
 #endif // DFA_GRAPH_HPP

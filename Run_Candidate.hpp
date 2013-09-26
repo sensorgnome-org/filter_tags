@@ -9,6 +9,7 @@
 #include "DFA_Node.hpp"
 #include "Hit.hpp"
 #include "Freq_Setting.hpp"
+#include "Known_Tag.hpp"
 
 class Run_Finder;
 
@@ -24,8 +25,7 @@ private:
   Hit_Buffer          hits;           // hits in the path so far
   Timestamp           last_ts;        // timestamp of last burst
   Timestamp           last_dumped_ts; // timestamp of last dumped burst (used to calculate burst slop when dumping)
-  Tag_ID              tag_id;         // tag ID of this run
-  bool                confirmed;      // is the current tag ID confirmed?
+  Known_Tag           *conf_tag;      // when confirmed, a pointer to the tag. else 0
   unsigned long long  run_id;         // unique ID for this run
   unsigned int        in_a_row;       // counter of bursts in this run
   Gap                 bi;             // the burst interval, in seconds, for this tag

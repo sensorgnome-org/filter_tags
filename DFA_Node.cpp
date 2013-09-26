@@ -4,15 +4,23 @@ DFA_Node::DFA_Node(unsigned int depth) :
   depth(depth),
   ids(),
   edges(),
-  max_age(-1)
+  max_age(-1),
+  node_id(get_unique_node_id())
 {};
 
 DFA_Node::DFA_Node(unsigned int depth, const Tag_ID_Set &ids) :
   depth(depth),
   ids(ids),
   edges(),
-  max_age(-1)
+  max_age(-1),
+  node_id(get_unique_node_id())
 {};
+
+unsigned long long
+DFA_Node::get_unique_node_id() {
+  static unsigned long long unique_node_id = 0;
+  return unique_node_id++;
+};
 
 DFA_Node * DFA_Node::next (Gap bi) {
 
@@ -51,7 +59,7 @@ Gap DFA_Node::get_max_age() {
   return max_age;
 };
 
-Tag_ID DFA_Node::get_id() {
+Tag_ID DFA_Node::get_ID() {
   // only valid when is_unique() is true
   return *ids.begin();
 };
@@ -61,15 +69,15 @@ void DFA_Node::dump(ostream & os, string indent, string indent_change) {
   // output the tree rooted at this node, appropriately indented,
   // to a stream
 
-  os << indent <<  "NODE @ depth " << depth << " ; max age: " << max_age << "\n"
-     << indent << ids << "\n" << indent << "Edges:" << "\n";
+  os << indent <<  "NODE " << node_id << " @ depth " << depth << " ; max age: " << max_age << "\n"
+     << indent << "Tags: " << ids << "\n" << indent << "Edges:" << "\n";
   for (Edge_iterator it = edges.begin(); it != edges.end(); ++it) {
     os << indent << it->first << "->";
     if (it->second->depth > depth) {
       os << endl;
       it->second->dump(os, indent + indent_change);
     } else {
-      os << " Back to NODE @ depth " << it->second->depth << ":" << it->second->ids << endl;
+      os << " Back to NODE " << it->second->node_id << " @ depth " << it->second->depth << ":" << it->second->ids << endl;
     }
   }
 };

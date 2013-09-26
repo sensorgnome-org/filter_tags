@@ -19,22 +19,29 @@ class Hashed_String_Vector {
 
 private:
   int count;
-  std::vector < std::string const * > strings;
+  std::vector < std::string > strings;
   typedef std::unordered_map < std::string, int > mymap;
   mymap indexes;
 
 public:
 
+  Hashed_String_Vector() :
+    count(0),
+    strings(),
+    indexes()
+  {
+  };
+
   // read-only indexing behaves as expected
-  int const operator[] (std::string &string) {
+  int const operator[] (std::string string) {
     if (indexes.count(string))
       return indexes[string];
     else
       return -1;
   };
 
-  std::string const * const operator[] (int index) {
-    if (index < strings.size() && index >= 0)
+  std::string operator[] (int index) {
+    if (index < (int) strings.size() && index >= 0)
       return strings[index];
     else
       return 0;
@@ -48,12 +55,9 @@ public:
     if (indexes.count(string))
       return indexes[string];
 
-    std::pair < mymap::iterator, bool > res = indexes.insert(std::pair < std::string, int > (string, count));
-    if (res.second) {
-      strings[count] = & (*res.first).first;
-      return count++;
-    };
-    return -1;
+    strings.push_back(string);
+    indexes.insert(std::pair < std::string, int > (string, count));
+    return count++;
   };
 };
 

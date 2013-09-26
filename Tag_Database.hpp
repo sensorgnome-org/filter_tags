@@ -12,16 +12,8 @@
 class Tag_Database {
 
  private:
-  // a tag group is a set of tags on the same nominal frequency and with the same Lotek ID
-  // (but presumably distinguishable burst interval)
-  // Tag_group is an unsigned int consisting of 1e6 * lotek_tag_id + nominalFreq_Khz
-  // so XXXYYYZZZ where XXX is the Lotek tag ID, and YYY.ZZZ is the nominal frequency in MHz
 
-  typedef unsigned int Tag_Group;
-  typedef std::unordered_map < Tag_Group, Tag_Set > Tag_Set_Set;
-
-  Tag_Set tags_by_id;
-  Tag_Set_Set tags;
+  Tag_Set tags; // owns the Known_Tags objects within it
 
   Freq_Set nominal_freqs;
 
@@ -30,9 +22,12 @@ public:
 
   Freq_Set & get_nominal_freqs();
 
-  Tag_Set * get_tags_at_freq_with_Lotek_ID(Nominal_Frequency_kHz freq, Lotek_Tag_ID lid);
+  Known_Tag * get_tag(Tag_ID tid);
 
-  Known_Tag & get_tag_with_id(Tag_ID tid);
+  Tag_Set::iterator begin();
+
+  Tag_Set::iterator end();
+
 };
 
 #endif // TAG_DATABASE_HPP

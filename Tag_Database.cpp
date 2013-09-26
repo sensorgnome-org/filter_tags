@@ -27,21 +27,8 @@ Tag_Database::Tag_Database(string filename) :
     }
     ++ num_lines;
     Nominal_Frequency_kHz nom_freq = Freq_Setting::as_Nominal_Frequency_kHz(freq_MHz);
-    // convert gaps to seconds
-
-    Tag_Group tg (nom_freq + (id % 1000) * 1000000);
-
-    if (tags.count(tg)) {
-      if (nominal_freqs.count(nom_freq) == 0) {
-      // we haven't seen this nominal frequency before; add it to the list
-        nominal_freqs.insert(nom_freq);
-      }
-      // this is a new (nominal freq, Lotek ID) pair; create a set for similar tags
-      tags[tg] = Tag_Set();
-    }
-    Known_Tag t(id, string(proj), freq_MHz, gaps[3]);  // gaps[3] is the burst interval
-    tags[tg][id] = t;
-    tags_by_id[(Tag_ID) id] = tags[tg][id]; // take address of member in container, not temporary local "t"
+    nominal_freqs.insert(nom_freq);
+    tags[id] = Known_Tag(id, string(proj), nom_freq, gaps[3]); // gaps[3] is the burst interval
   };
   if (tags.size() == 0)
     throw std::runtime_error("No tags registered.");
@@ -51,13 +38,18 @@ Freq_Set & Tag_Database::get_nominal_freqs() {
   return nominal_freqs;
 };
 
-Tag_Set *
-Tag_Database::get_tags_at_freq_with_Lotek_ID(Nominal_Frequency_kHz freq, Lotek_Tag_ID lid) {
-  return & tags[Tag_Group(freq + 1000000 * lid)];
+Tag_Set::iterator
+Tag_Database::begin() {
+  return tags.begin();
+};
+
+Tag_Set::iterator
+Tag_Database::end() {
+  return tags.end();
 };
 
 
-Known_Tag &
-Tag_Database::get_tag_with_id(Tag_ID tid) {
-  return tags_by_id[tid];
+Known_Tag *
+Tag_Database::get_tag(Tag_ID tid) {
+  return & tags[tid];
 };
