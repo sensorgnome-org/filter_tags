@@ -36,7 +36,7 @@ class Run_Finder {
 public:
   Run_Foray * owner;
 
-  static std::unordered_set < Lotek_Tag_ID > tags_not_in_db;
+  std::unordered_set < Lotek_Tag_ID > tags_not_in_db;
 
   // - internal representation of tag database
   // the set of tags at a single nominal frequency and with the same Lotek ID is a "Tag_Set"

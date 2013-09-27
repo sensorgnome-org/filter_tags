@@ -2,7 +2,7 @@
 
 #include <string.h>
 
-Run_Foray::Run_Foray (Tag_Database &tags, std::istream *data, std::ostream *out) :
+Run_Foray::Run_Foray (Tag_Database * tags, std::istream *data, std::ostream *out) :
   tags(tags),
   data(data),
   out(out),
@@ -21,6 +21,7 @@ Run_Foray::start() {
   int lid;
   char ant_label[MAX_ANT_CODE_SIZE+1];
   int ant_code;
+  unsigned int dtaline; // line number in original .DTA file
   double sig;
   double lat;
   double lon;
@@ -31,14 +32,14 @@ Run_Foray::start() {
   int codeset_id;
 
   // add a run finder for each nominal frequency
-  Freq_Set nf = tags.get_nominal_freqs();
+  Freq_Set nf = tags->get_nominal_freqs();
 
-  for (Freq_Set::iterator ifs = nf.begin(); ifs != nf.end(); ++ifs)
-    run_finders[*ifs] = new Run_Finder(this, *ifs, "");
-
-  // add every known tag to the appropriate Run_Finder
-  for (Tag_Set::iterator its = tags.begin(); its != tags.end(); ++its)
-    run_finders[its->second.freq]->add_tag(& its->second);
+  for (Freq_Set::iterator ifs = nf.begin(); ifs != nf.end(); ++ifs) {
+    Run_Finder * rf = run_finders[*ifs] = new Run_Finder(this, *ifs, "");
+    Tag_Set * tgs = tags->get_tags_at_freq(*ifs);
+    for (auto it = tgs->begin(); it != tgs->end(); ++it)
+      rf->add_tag(& it->second);
+  }
 
   Run_Finder::set_out_stream(out);
 
@@ -62,9 +63,9 @@ Run_Foray::start() {
 
     ++line_no;
     // lines are like this:
-    // 1374672755.3166,118,1,0,999,999,166.3,"Lotek3"
+    // 1374672755.3166,118,1,0,999,999,1345,166.3,"Lotek3"
 
-    if (8 != sscanf(buf, "%lf,%d,\"%[^\"]\",%lf,%lf,%lf,%lf,\"%[^\"]\"", &ts, &lid, ant_label, &sig, &lat, &lon, &freq, codeset)) {
+    if (9 != sscanf(buf, "%lf,%d,\"%[^\"]\",%lf,%lf,%lf,%u,%lf,\"%[^\"]\"", &ts, &lid, ant_label, &sig, &lat, &lon, &dtaline, &freq, codeset)) {
       std::cerr << "Warning: malformed line in input\n  at line " << line_no << ":\n" << (string("") + buf) << std::endl;
       continue;
     }
@@ -72,7 +73,7 @@ Run_Foray::start() {
     nom_freq = Freq_Setting::get_closest_nominal_freq(freq);
     codeset_id = Run_Foray::codeset_ids.add(std::string(codeset));
 
-    Hit h = Hit::make(ts, lid, ant_code, sig, lat, lon, freq, codeset_id);
+    Hit h = Hit::make(ts, lid, ant_code, sig, lat, lon, dtaline, freq, codeset_id);
     run_finders[nom_freq]->process(h);
   }
 

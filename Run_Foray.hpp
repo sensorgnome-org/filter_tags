@@ -18,12 +18,12 @@ class Run_Foray {
 
 public:
   
-  Run_Foray (Tag_Database &tags, std::istream * data, std::ostream * out);
+  Run_Foray (Tag_Database * tags, std::istream * data, std::ostream * out);
 
   //  ~Run_Foray ();
 
   void start();
-  Tag_Database tags; // registered tags on all known nominal frequencies
+  Tag_Database * tags; // registered tags on all known nominal frequencies
 
 protected:
   static const int MAX_ANT_CODE_SIZE = 5; // max size (chars) of a lotek antenna code

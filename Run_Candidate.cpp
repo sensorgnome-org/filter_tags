@@ -27,8 +27,8 @@ bool Run_Candidate::shares_any_hits(Run_Candidate &tf) {
   // does this tag candidate use any of the hits
   // from a run accepted by another tag filter?
 
-  Hit_Buffer::iterator ihit = tf.hits.begin();
-  for (unsigned int i = 0; i < hits_to_confirm_id && ihit != tf.hits.end(); ++i, ++ihit)
+  
+  for (Hit_Buffer::iterator ihit = tf.hits.begin(); ihit != tf.hits.end(); ++ihit)
     if (hits.count(ihit->first))
       return true;
   return false;
@@ -64,7 +64,7 @@ bool Run_Candidate::add_hit(const Hit &h, DFA_Node *new_state) {
   // does this new burst confirm the tagID ?
 
   if ((! conf_tag) && hits.size() >= hits_to_confirm_id) {
-    conf_tag = owner->owner->tags.get_tag(state->get_ID());
+    conf_tag = owner->owner->tags->get_tag(owner->nom_freq, state->get_ID());
     bi = conf_tag->bi;
     return true;
   }
@@ -81,6 +81,12 @@ Tag_ID Run_Candidate::get_tag_id() {
 bool Run_Candidate::is_confirmed() {
   return conf_tag != 0;
 };
+
+bool 
+Run_Candidate::next_hit_confirms() {
+  return conf_tag == 0 && hits.size() == hits_to_confirm_id - 1;
+};
+
 
 void Run_Candidate::clear_hits() {
   // drop the most recent hit burst (presumably after
@@ -109,6 +115,7 @@ void Run_Candidate::dump_hits(ostream *os, string prefix) {
 	  << ',' << in_a_row
 	  << ',' << ih->second.sig
 	  << ',' << bs
+          << ',' << ih->second.dtaline
           << ',' << ih->second.lat
           << ',' << ih->second.lon
 	  << ',' << std::setprecision(6) << ih->second.ant_freq << std::setprecision(4) << std::endl;

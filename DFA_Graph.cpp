@@ -5,7 +5,7 @@ DFA_Graph::DFA_Graph(unsigned int max_depth) :
 
   // NB: preallocate the vector of node sets so that iterators to particular
   // sets are not invalidated by reallocation of the vector as it grows.
-
+  
   root(0),
   N(max_depth),
   tags()

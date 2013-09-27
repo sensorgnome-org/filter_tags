@@ -26,13 +26,14 @@ private:
   Timestamp           last_ts;        // timestamp of last burst
   Timestamp           last_dumped_ts; // timestamp of last dumped burst (used to calculate burst slop when dumping)
   Known_Tag           *conf_tag;      // when confirmed, a pointer to the tag. else 0
-  unsigned long long  run_id;         // unique ID for this run
   unsigned int        in_a_row;       // counter of bursts in this run
   Gap                 bi;             // the burst interval, in seconds, for this tag
 
   static const float BOGUS_BURST_SLOP; // burst slop reported for first burst of run (where we don't have a previous burst)  Doesn't really matter, since we can distinguish this situation in the data by "pos.in.run==1"
 
 public:
+
+  unsigned long long  run_id;         // unique ID for this run
 
   static unsigned int hits_to_confirm_id; // how many hits must be seen before an ID level moves to confirmed?  
  
@@ -50,7 +51,9 @@ public:
 
   Tag_ID get_tag_id();
 
-  bool is_confirmed();
+  bool is_confirmed();      // has tag ID been confirmed?
+
+  bool next_hit_confirms(); // will adding one more hit confirm tag ID?
 
   void clear_hits();
 

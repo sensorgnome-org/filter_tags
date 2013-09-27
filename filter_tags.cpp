@@ -213,7 +213,7 @@ main (int argc, char **argv) {
     if (header_desired)
       Run_Finder::output_header(&std::cout);
 
-    Run_Foray foray(tag_db, hits, & std::cout);
+    Run_Foray foray(& tag_db, hits, & std::cout);
 
     foray.start();
 }

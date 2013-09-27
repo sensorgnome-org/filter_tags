@@ -7,6 +7,7 @@ Run_Finder::Run_Finder (Run_Foray *owner) :
 
 Run_Finder::Run_Finder (Run_Foray *owner, Nominal_Frequency_kHz nom_freq, string prefix) :
   owner(owner),
+  tags_not_in_db(),
   nom_freq(nom_freq),
   G(),
   cands(),
@@ -25,8 +26,13 @@ Run_Finder::add_tag(Known_Tag * t)
 
   Lotek_Tag_ID lid = t->get_lotek_ID();
   if (G.count(lid) == 0)
-    G.insert(std::pair < Lotek_Tag_ID, DFA_Graph > (lid, DFA_Graph(Run_Candidate::hits_to_confirm_id)));
+    G.insert(std::pair < Lotek_Tag_ID, DFA_Graph > (lid, DFA_Graph(Run_Candidate::hits_to_confirm_id * 10)));
   G[lid].add_tag(t);
+
+#ifdef FILTER_TAGS_DEBUG
+  std::cerr << "Adding tag " << t->id << " @ " << t->freq / 1000.0 << std::endl;
+#endif
+
   if (cands.count(lid) == 0)
     cands[lid] = Cand_Set();
 }
@@ -53,9 +59,14 @@ Run_Finder::setup_graphs() {
     DFA_Graph &g = ig->second;
     g.setup_root();
 
+    bool have_nonsingleton_leaves = true;
+
     // loop over each depth (i.e. breadth-first)
-    for (unsigned int depth = 0; depth < g.max_depth; ++depth) {
-      
+    unsigned int depth;
+    for (depth = 0; have_nonsingleton_leaves && depth < g.max_depth; ++depth) {
+
+      have_nonsingleton_leaves = false;
+
       Node_Map & nm = g.N[depth];
 
       // loop over each node at this depth
@@ -67,6 +78,8 @@ Run_Finder::setup_graphs() {
         // for each tag in this node, add edges for fuzzified
         // multiples of its burst interval
 	  
+        have_nonsingleton_leaves |= in->first.size() > 1;
+
         for (auto i = in->first.begin(); i != in->first.end(); ++i) {
           Tag_ID_Set id;
           id.insert(*i);
@@ -82,26 +95,17 @@ Run_Finder::setup_graphs() {
         // PULSES_PER_BURST-1, so that we can keep track of runs of
         // consecutive bursts from a tag
       
-        g.grow(in->second, m, (depth < g.max_depth - 1) ? depth + 1 : depth);
+        g.grow(in->second, m, (in->first.size() > 1 && depth < Run_Candidate::hits_to_confirm_id - 1) ? depth + 1 : depth);
       }
     }
 
     // sanity check: for each node at max depth, ensure there's only one tag ID left
-    Node_Map & nm = g.N[g.max_depth - 1];
-
-    for (auto in = nm.begin(); in != nm.end(); ++in) {
-      if (in->first.size() > 1) {
-        std::ostringstream ids;
-        ids << "Error: after " << g.max_depth << " bursts,\nthese tag IDs are not distinguishable with current parameters:\n";
-        for (auto i = in->first.begin(); i != in->first.end(); ++i) {
-          ids << "  " << (*i) << " @ " << (nom_freq / 1000.0) << "\n";
-        }
-#ifndef FILTER_TAGS_DEBUG
-        throw std::runtime_error(ids.str());
-#else
-        std::cerr << ids.str();
+    if (have_nonsingleton_leaves) {
+      std::cerr << "Warning: some tags with lotek ID " << ig->first << " @ " << nom_freq / 1000.0 << " are not distinguishable.\n";
+    } else {
+#ifdef FILTER_TAGS_DEBUG
+      std::cerr <<"All tags with Lotek ID " << ig->first << " @ " << nom_freq / 1000.0 << " can be distinguished after at most " << depth << " bursts.\n";
 #endif
-      }
     }
   }
 };
@@ -141,7 +145,7 @@ Run_Finder::init() {
 
 void
 Run_Finder::output_header(ostream * out) {
-  (*out) << "\"ts\",\"ant\",\"id\",\"tagProj\",\"runID\",\"posInRun\",\"sig\",\"burstSlop\",\"lat\",\"lon\",\"ant.freq\""
+  (*out) << "\"ts\",\"ant\",\"id\",\"tagProj\",\"runID\",\"posInRun\",\"sig\",\"burstSlop\",\"DTAline\",\"lat\",\"lon\",\"ant.freq\""
          << std::endl;
 };
     
@@ -175,7 +179,7 @@ Run_Finder::process(Hit &h) {
   if (h.lid == 999)
     return;
 
-  if (! cands.count(h.lid)) {
+  if (cands.count(h.lid) == 0) {
     tags_not_in_db.insert(h.lid);
     return;
   }
@@ -215,7 +219,7 @@ Run_Finder::process(Hit &h) {
     // We will be adding the hit to this run candidate. 
     // If it is unconfirmed, clone it first.
 
-    if (! ci->is_confirmed()) {
+    if (! ci->is_confirmed() && ! ci->next_hit_confirms()) {
       // clone the candidate, without the added hit
       cloned_candidates.push_back(*ci);
     }
@@ -225,10 +229,11 @@ Run_Finder::process(Hit &h) {
       // See what candidates should be deleted because they
       // have the same ID or share any pulses.
 
+      // We check both the main list and the clone list.
+
       for (Cand_Set::iterator cci = cs.begin(); cci != cs.end(); /**/ ) {
 	if (cci != ci 
-	    && (cci->has_same_id_as(*ci)
-		|| cci->shares_any_hits(*ci)))
+	    && (cci->has_same_id_as(*ci) || cci->shares_any_hits(*ci)))
 	  {
 	    Cand_Set::iterator di = cci;
 	    ++cci;
@@ -237,6 +242,21 @@ Run_Finder::process(Hit &h) {
 	  ++cci;
 	};
       }
+      for (Cand_Set::iterator cci = cloned_candidates.begin(); cci != cloned_candidates.end(); /**/ ) {
+	if (cci->has_same_id_as(*ci) || cci->shares_any_hits(*ci))
+	  {
+	    Cand_Set::iterator di = cci;
+	    ++cci;
+	    cloned_candidates.erase(di);
+	  } else {
+	  ++cci;
+	};
+      }
+      // push this candidate to the start of the list
+      // so it has priority for accepting new hits
+
+      cs.splice(cs.begin(), cs, ci);
+      ci = cs.begin();
     }
     if (ci->is_confirmed()) {
       // dump all hits from this confirmed run
@@ -293,10 +313,9 @@ Run_Finder::end_processing() {
   }
 
   if (tags_not_in_db.size() > 0) {
-    std::cerr << "Warning: the following Lotek tag IDs are not in the database:\n";
+    std::cerr << "Warning: the following Lotek tag IDs @ " << nom_freq / 1000.0 << " are not in the database:\n";
     for (auto id = tags_not_in_db.begin(); id != tags_not_in_db.end(); ++id)
-      std::cerr << *id << ' ';
-    std::cerr << std::endl;
+      std::cerr << *id << '\n';
   }
       
 };
@@ -306,6 +325,4 @@ Gap Run_Finder::default_burst_slop_expansion = 0.001; // 1ms = 1 part in 10000 f
 unsigned int Run_Finder::default_max_skipped_bursts = 60;
 
 ostream * Run_Finder::out_stream = 0;
-
-Lotek_ID_Set Run_Finder::tags_not_in_db = Lotek_ID_Set();
 

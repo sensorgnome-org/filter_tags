@@ -6,14 +6,14 @@
 #include "Freq_Setting.hpp"
 #include "Known_Tag.hpp"
 
-#include <unordered_map>
-#include <utility>
+#include <map>
 
 class Tag_Database {
 
  private:
-
-  Tag_Set tags; // owns the Known_Tags objects within it
+  typedef std::map < Nominal_Frequency_kHz, Tag_Set > Tag_Set_Set;
+  
+  Tag_Set_Set tags;
 
   Freq_Set nominal_freqs;
 
@@ -22,12 +22,9 @@ public:
 
   Freq_Set & get_nominal_freqs();
 
-  Known_Tag * get_tag(Tag_ID tid);
+  Tag_Set * get_tags_at_freq(Nominal_Frequency_kHz freq);
 
-  Tag_Set::iterator begin();
-
-  Tag_Set::iterator end();
-
+  Known_Tag * get_tag(Nominal_Frequency_kHz freq, Tag_ID id);
 };
 
 #endif // TAG_DATABASE_HPP

@@ -21,6 +21,7 @@ public:
   float		        sig;		// estimate of hit strength, in dB max
   float                 lat;            // latitude, if available
   float                 lon;            // longitude, if available
+  unsigned int          dtaline;        // line in original .DTA source file
   Frequency_MHz         ant_freq;	// frequency to which receiving antenna was tuned
   int                   codeset_id;     // code set ID
 
@@ -29,12 +30,12 @@ public:
   Seq_No	seq_no;     
 
 private:
-  Hit(double ts, Lotek_Tag_ID lid, int ant_code, float sig, float lat, float lon, Frequency_MHz ant_freq, int codeset_id);
+  Hit(double ts, Lotek_Tag_ID lid, int ant_code, float sig, float lat, float lon, unsigned int dtaline, Frequency_MHz ant_freq, int codeset_id);
 
 public:
   Hit(){};
 
-  static Hit make(double ts, Lotek_Tag_ID lid, int ant_code, float sig, float lat, float lon, Frequency_MHz ant_freq, int codeset_id);
+  static Hit make(double ts, Lotek_Tag_ID lid, int ant_code, float sig, float lat, float lon, unsigned int dtaline, Frequency_MHz ant_freq, int codeset_id);
 
   void dump();
 };
