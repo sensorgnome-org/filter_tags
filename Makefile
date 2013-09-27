@@ -4,10 +4,10 @@
 ## PROFILING=-g -pg
 
 ## DEBUG FLAGS:
-CPPFLAGS=-Wall -g3 -std=c++0x $(PROFILING)
+## CPPFLAGS=-Wall -DFILTER_TAGS_DEBUG -g3 -std=c++0x $(PROFILING)
 
 ## PRODUCTION FLAGS:
-##CPPFLAGS=-Wall -O3 -std=c++0x $(PROFILING)
+CPPFLAGS=-Wall -O3 -std=c++0x $(PROFILING)
 
 
 all: filter_tags

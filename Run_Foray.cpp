@@ -61,6 +61,8 @@ Run_Foray::start() {
       continue;
 
     ++line_no;
+    // lines are like this:
+    // 1374672755.3166,118,1,0,999,999,166.3,"Lotek3"
 
     if (8 != sscanf(buf, "%lf,%d,\"%[^\"]\",%lf,%lf,%lf,%lf,\"%[^\"]\"", &ts, &lid, ant_label, &sig, &lat, &lon, &freq, codeset)) {
       std::cerr << "Warning: malformed line in input\n  at line " << line_no << ":\n" << (string("") + buf) << std::endl;

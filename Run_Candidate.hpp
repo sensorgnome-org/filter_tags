@@ -54,8 +54,6 @@ public:
 
   void clear_hits();
 
-  void set_bi(float bi);
- 
   void dump_hits(ostream *os, string prefix="");
 
   static void set_hits_to_confirm_id(unsigned int n);

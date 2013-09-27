@@ -43,7 +43,7 @@
 #include "Run_Candidate.hpp"
 #include "Run_Foray.hpp"
 
-//#define FIND_TAGS_DEBUG 
+//#define FILTER_TAGS_DEBUG 
 
 void 
 usage() {

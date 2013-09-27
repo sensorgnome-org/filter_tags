@@ -2,6 +2,7 @@
 #define FILTER_TAGS_COMMON_HPP
 
 #include <set>
+#include <unordered_set>
 
 const static unsigned int MAX_LINE_SIZE = 512;	// characters in a .CSV file line
 
@@ -28,6 +29,9 @@ typedef int Nominal_Frequency_kHz;
 
 typedef int Lotek_Tag_ID;  // only 3 digits
 static const Lotek_Tag_ID BOGUS_LOTEK_TAG_ID = -1;
+
+// a set of Lotek tag IDs
+typedef std::unordered_set < Lotek_Tag_ID > Lotek_ID_Set;
 
 typedef int Tag_ID;
 static const Tag_ID BOGUS_TAG_ID = -1;

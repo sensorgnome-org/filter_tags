@@ -71,7 +71,7 @@ Run_Finder::setup_graphs() {
           Tag_ID_Set id;
           id.insert(*i);
           Gap bi = g.tags[*i]->bi;
-          for (unsigned int k = 1; k <= max_skipped_bursts; ++k) {
+          for (unsigned int k = 1; k <= max_skipped_bursts + 1; ++k) {
             Gap slop =  burst_slop + burst_slop_expansion * (k - 1);
             m.add(make_pair(interval < Gap > :: closed(bi * k - slop, bi * k + slop), id));
           }
@@ -94,9 +94,13 @@ Run_Finder::setup_graphs() {
         std::ostringstream ids;
         ids << "Error: after " << g.max_depth << " bursts,\nthese tag IDs are not distinguishable with current parameters:\n";
         for (auto i = in->first.begin(); i != in->first.end(); ++i) {
-          ids << "  " << (*i) << "\n";
+          ids << "  " << (*i) << " @ " << (nom_freq / 1000.0) << "\n";
         }
+#ifndef FILTER_TAGS_DEBUG
         throw std::runtime_error(ids.str());
+#else
+        std::cerr << ids.str();
+#endif
       }
     }
   }
@@ -126,21 +130,18 @@ Run_Finder::set_out_stream(ostream * os) {
 void
 Run_Finder::init() {
   setup_graphs();
+#ifdef FILTER_TAGS_DEBUG
+  std::cerr << "Graphs for " << nom_freq << std::endl;
   for (Graph_Map::iterator ig = G.begin(); ig != G.end(); ++ig) {
     std::cerr << ig->first << std::endl;
     ig->second.get_root()->dump(std::cerr);
-  };
-
+  }
+#endif
 };
 
 void
 Run_Finder::output_header(ostream * out) {
-  (*out) << "\"ant\",\"ts\",\"id\",\"freq\",\"freq.sd\",\"sig\",\"sig.sd\",\"noise\",\"run.id\",\"pos.in.run\",\"slop\",\"burst.slop\",\"hit.rate\",\"ant.freq\"" 
-      
-#ifdef FIND_TAGS_DEBUG
-         << " ,\"p1\",\"p2\",\"p3\",\"p4\",\"ptr\""
-#endif
-      
+  (*out) << "\"ts\",\"ant\",\"id\",\"tagProj\",\"runID\",\"posInRun\",\"sig\",\"burstSlop\",\"lat\",\"lon\",\"ant.freq\""
          << std::endl;
 };
     
@@ -171,6 +172,14 @@ Run_Finder::process(Hit &h) {
      Run_Candidate with this hit
   */
 
+  if (h.lid == 999)
+    return;
+
+  if (! cands.count(h.lid)) {
+    tags_not_in_db.insert(h.lid);
+    return;
+  }
+
   Cand_Set cloned_candidates;
 
   // unless this hit is used to confirm a run candidate (in which case it's
@@ -178,6 +187,7 @@ Run_Finder::process(Hit &h) {
 
   bool start_new_candidate_with_hit = true;
 
+  
   Cand_Set & cs = cands[h.lid];
 
   for (Cand_Set::iterator ci = cs.begin(); ci != cs.end(); /**/ ) {
@@ -227,7 +237,8 @@ Run_Finder::process(Hit &h) {
 	  ++cci;
 	};
       }
-	
+    }
+    if (ci->is_confirmed()) {
       // dump all hits from this confirmed run
       ci->dump_hits(out_stream, prefix);
 	
@@ -269,10 +280,6 @@ Run_Finder::end_processing() {
             { 
               Cand_Set::iterator di = cci;
               ++cci;
-		
-#ifdef FIND_TAGS_DEBUG
-              std::cerr << "Killing id-matching too old candidate " << &(*di) << " with unique_id = " << di->unique_id << std::endl;
-#endif
               cs.erase(di);
               continue;
             } else {
@@ -284,6 +291,14 @@ Run_Finder::end_processing() {
       }
     }
   }
+
+  if (tags_not_in_db.size() > 0) {
+    std::cerr << "Warning: the following Lotek tag IDs are not in the database:\n";
+    for (auto id = tags_not_in_db.begin(); id != tags_not_in_db.end(); ++id)
+      std::cerr << *id << ' ';
+    std::cerr << std::endl;
+  }
+      
 };
 
 Gap Run_Finder::default_burst_slop = 0.010; // 10 ms
@@ -291,3 +306,6 @@ Gap Run_Finder::default_burst_slop_expansion = 0.001; // 1ms = 1 part in 10000 f
 unsigned int Run_Finder::default_max_skipped_bursts = 60;
 
 ostream * Run_Finder::out_stream = 0;
+
+Lotek_ID_Set Run_Finder::tags_not_in_db = Lotek_ID_Set();
+

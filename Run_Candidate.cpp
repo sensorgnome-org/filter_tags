@@ -52,7 +52,7 @@ bool Run_Candidate::add_hit(const Hit &h, DFA_Node *new_state) {
     Add this hit to the run candidate, given the new state this
     will advance the DFA to.
 
-    Return true if adding the hit confirms the tag ID.
+    Return true if the tag ID has just been confirmed.
 
   */
 
@@ -65,6 +65,7 @@ bool Run_Candidate::add_hit(const Hit &h, DFA_Node *new_state) {
 
   if ((! conf_tag) && hits.size() >= hits_to_confirm_id) {
     conf_tag = owner->owner->tags.get_tag(state->get_ID());
+    bi = conf_tag->bi;
     return true;
   }
   return false;
@@ -88,10 +89,6 @@ void Run_Candidate::clear_hits() {
   hits.clear();
 };
 
-void Run_Candidate::set_bi(float bi) {
-  this->bi = bi;
-};
-
 void Run_Candidate::dump_hits(ostream *os, string prefix) {
   // dump all hits in the run so far
 
@@ -99,7 +96,7 @@ void Run_Candidate::dump_hits(ostream *os, string prefix) {
     double bs;
     if (last_dumped_ts != BOGUS_TIMESTAMP) {
       double gap = ih->second.ts - last_dumped_ts;
-      bs = fmodf(gap, bi) - bi;
+      bs = gap - round(gap / bi) * bi;
     } else {
       bs = BOGUS_BURST_SLOP;
     }
@@ -107,11 +104,13 @@ void Run_Candidate::dump_hits(ostream *os, string prefix) {
     (*os) << prefix << std::setprecision(14) << ih->second.ts << std::setprecision(4)
           << ',' << Run_Foray::ant_codes[ih->second.ant_code]
 	  << ',' << conf_tag->id
-          << ",\"" << conf_tag->proj
-	  << "\"," << ih->second.sig
+          << ",\"" << conf_tag->proj << '"'
 	  << ',' << run_id
 	  << ',' << in_a_row
+	  << ',' << ih->second.sig
 	  << ',' << bs
+          << ',' << ih->second.lat
+          << ',' << ih->second.lon
 	  << ',' << std::setprecision(6) << ih->second.ant_freq << std::setprecision(4) << std::endl;
     last_dumped_ts = ih->second.ts;
   }
