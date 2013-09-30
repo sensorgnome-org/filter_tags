@@ -6,7 +6,7 @@ Tag_Database::Tag_Database(string filename) {
   char buf[MAX_LINE_SIZE + 1];
 
   inf.getline(buf, MAX_LINE_SIZE);
-  if (string(buf) != "\"proj\",\"id\",\"tagFreq\",\"fcdFreq\",\"g1\",\"g2\",\"g3\",\"bi\",\"dfreq\",\"g1.sd\",\"g2.sd\",\"g3.sd\",\"bi.sd\",\"dfreq.sd\",\"filename\"")
+  if (string(buf) != "\"proj\",\"id\",\"tagFreq\",\"bi\"")
     throw std::runtime_error("Tag file header missing or incorrect\n");
 
   int num_lines = 1;
@@ -14,19 +14,18 @@ Tag_Database::Tag_Database(string filename) {
     inf.getline(buf, MAX_LINE_SIZE);
     if (inf.gcount() == 0)
       break;
-    char proj[MAX_LINE_SIZE+1], filename[MAX_LINE_SIZE];
+    char proj[MAX_LINE_SIZE+1];
     int id;
-    float freq_MHz, fcd_freq, gaps[4], dfreq, g1sd, g2sd, g3sd, bisd, dfreqsd;
-    int num_par = sscanf(buf, "\"%[^\"]\",%d,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,\"%[^\"]\"", proj, &id, &freq_MHz, &fcd_freq, &gaps[0], &gaps[1], &gaps[2], &gaps[3], &dfreq, &g1sd, &g2sd, &g3sd, &bisd, &dfreqsd, filename);
-    if (num_par < 15) {
+    float freq_MHz;
+    float bi;
+
+    int num_par = sscanf(buf, "\"%[^\"]\",%d,%f,%f", proj, &id, &freq_MHz, &bi);
+    if (num_par < 4) {
       std::cerr << "error at line " << num_lines << " with only " << num_par << " parameters parsed.\n";
       throw std::runtime_error("Tag file line incomplete or corrupt\n");
     }
     ++ num_lines;
     Nominal_Frequency_kHz nom_freq = Freq_Setting::as_Nominal_Frequency_kHz(freq_MHz);
-    // convert gaps to seconds
-    for (int i=0; i < 3; ++i)
-      gaps[i] /= 1000.0;
 
     if (nominal_freqs.count(nom_freq) == 0) {
       // we haven't seen this nominal frequency before
@@ -35,7 +34,7 @@ Tag_Database::Tag_Database(string filename) {
       tags[nom_freq] = Tag_Set();
     }
     if (tags[nom_freq].count(id) == 0) {
-      Known_Tag t(id, string(proj), nom_freq, gaps[3]); // gaps[3] is the burst interval
+      Known_Tag t(id, string(proj), nom_freq, bi);
       tags[nom_freq][id] = t;
     } else {
       std::cerr << "Ignoring duplicated data for tag ID == " << id << "\nAlready have tag " << id << " with proj='" << tags[nom_freq][id].proj << "' at freq=" << tags[nom_freq][id].freq << "MHz\n";
