@@ -134,7 +134,7 @@ Run_Finder::set_out_stream(ostream * os) {
 void
 Run_Finder::init() {
   setup_graphs();
-#ifdef FILTER_TAGS_DEBUG
+#ifdef FILTER_TAGS_DEBUG_2
   std::cerr << "Graphs for " << nom_freq << std::endl;
   for (Graph_Map::iterator ig = G.begin(); ig != G.end(); ++ig) {
     std::cerr << ig->first << std::endl;
@@ -191,10 +191,13 @@ Run_Finder::process(Hit &h) {
 
   bool start_new_candidate_with_hit = true;
 
-  
+
   Cand_Set & cs = cands[h.lid];
+  Cand_Set::iterator conf_divider = cs.begin();  //divider between confirmed and unconfirmed; we add newly confirmed elements to this location
 
   for (Cand_Set::iterator ci = cs.begin(); ci != cs.end(); /**/ ) {
+    if (ci->is_confirmed())
+      ++ conf_divider;  // bump up divider until we have reached an unconfirmed candidate; newly confirmed candidates will go here
 
     if (ci->is_too_old_given_hit_time(h)) {
 
@@ -252,11 +255,12 @@ Run_Finder::process(Hit &h) {
 	  ++cci;
 	};
       }
-      // push this candidate to the start of the list
+      // push this candidate to end of the confirmed list
       // so it has priority for accepting new hits
 
-      cs.splice(cs.begin(), cs, ci);
-      ci = cs.begin();
+      Cand_Set::iterator di = ci;
+      cs.splice(conf_divider, cs, ci);
+      ci = di;
     }
     if (ci->is_confirmed()) {
       // dump all hits from this confirmed run

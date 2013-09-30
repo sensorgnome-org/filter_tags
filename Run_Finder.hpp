@@ -45,7 +45,9 @@ public:
 
   Graph_Map G;  // a DFA graph for each lotek tag ID at this frequency
 
-  Cand_Set_Map cands; // for each Lotek ID, a set of run candidates
+  Cand_Set_Map cands; // for each Lotek ID, a list of run candidates; within each list, confirmed
+  // candidates precede unconfirmed candidates; within confirmed candidates, order is from earliest
+  // to latest confirmed
 
   // algorithmic parameters
 
