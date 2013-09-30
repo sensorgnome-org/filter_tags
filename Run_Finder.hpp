@@ -20,10 +20,10 @@ class Run_Candidate;
 #include "Run_Candidate.hpp"
 
 // Set of running DFAs representing possible tags burst sequences
-typedef std::list < Run_Candidate > Cand_Set;
+typedef std::list < Run_Candidate > Cand_List;
 
-// Map from Lotek ID to sets of Run_Candidates
-typedef std::unordered_map < Lotek_Tag_ID, Cand_Set > Cand_Set_Map;
+// Map from Lotek ID to vectors of lists of Run_Candidates
+typedef std::unordered_map < Lotek_Tag_ID, std::vector < Cand_List >  > Cand_List_Map;
 
 class Run_Finder {
 
@@ -34,6 +34,8 @@ class Run_Finder {
   */
 
 public:
+  static const int NUM_CAND_LISTS = 2;
+
   Run_Foray * owner;
 
   std::unordered_set < Lotek_Tag_ID > tags_not_in_db;
@@ -45,7 +47,7 @@ public:
 
   Graph_Map G;  // a DFA graph for each lotek tag ID at this frequency
 
-  Cand_Set_Map cands; // for each Lotek ID, a list of run candidates; within each list, confirmed
+  Cand_List_Map cands; // for each Lotek ID, a list of run candidates; within each list, confirmed
   // candidates precede unconfirmed candidates; within confirmed candidates, order is from earliest
   // to latest confirmed
 

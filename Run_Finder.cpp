@@ -34,7 +34,7 @@ Run_Finder::add_tag(Known_Tag * t)
 #endif
 
   if (cands.count(lid) == 0)
-    cands[lid] = Cand_Set();
+    cands[lid] = std::vector < Cand_List > (NUM_CAND_LISTS);
 }
 
 void
@@ -184,105 +184,101 @@ Run_Finder::process(Hit &h) {
     return;
   }
 
-  Cand_Set cloned_candidates;
+  Cand_List cloned_candidates;
 
-  // unless this hit is used to confirm a run candidate (in which case it's
-  // very likely to be part of that tag) we will start a new run candidate with it
+  // loop over confirmed then unconfirmed candidates
 
-  bool start_new_candidate_with_hit = true;
+  bool confirmed_acceptance = false; // has hit been accepted by a confirmed candidate?
+ 
+  for (int i = 0; i < NUM_CAND_LISTS && ! confirmed_acceptance; ++i) {
+    // unless this hit is used to confirm a run candidate (in which case it's
+    // very likely to be part of that tag) we will start a new run candidate with it
+    // also, we don't start a new candidate with a hit unless we've already tried
+    // letting unconfirmed candidates accept it.
 
+    Cand_List & cs = cands[h.lid][i];
 
-  Cand_Set & cs = cands[h.lid];
-  Cand_Set::iterator conf_divider = cs.begin();  //divider between confirmed and unconfirmed; we add newly confirmed elements to this location
+    for (Cand_List::iterator ci = cs.begin(); ! confirmed_acceptance && ci != cs.end(); /**/ ) {
+      if (ci->is_too_old_given_hit_time(h)) {
 
-  for (Cand_Set::iterator ci = cs.begin(); ci != cs.end(); /**/ ) {
-    if (ci->is_confirmed())
-      ++ conf_divider;  // bump up divider until we have reached an unconfirmed candidate; newly confirmed candidates will go here
+        if (ci->is_confirmed()) {
+          ci->dump_hits(out_stream, prefix);
+        }
 
-    if (ci->is_too_old_given_hit_time(h)) {
+        Cand_List::iterator di = ci;
+        ++ci;
+        cs.erase(di);
+        continue;
+      }
 
+      // see whether this Tag Candidate can accept this hit
+      DFA_Node * next_state = ci->advance_by_hit(h);
+
+      if (!next_state) {
+        ++ci;
+        continue;
+      }
+      
+      confirmed_acceptance = ci->is_confirmed();
+
+      // We will be adding the hit to this run candidate. 
+      // If it is unconfirmed, clone it first.
+
+      if (! ci->is_confirmed() && ! ci->next_hit_confirms()) {
+        // clone the candidate, without the added hit
+        cloned_candidates.push_back(*ci);
+      }
+
+      if (ci->add_hit(h, next_state)) {
+        // this run candidate has just been confirmed.
+        // See what candidates should be deleted because they
+        // have the same ID or share any pulses.
+
+        // We check both the main list and the clone list.
+
+        for (Cand_List::iterator cci = cs.begin(); cci != cs.end(); /**/ ) {
+          if (cci != ci 
+              && (cci->has_same_id_as(*ci) || cci->shares_any_hits(*ci)))
+            {
+              Cand_List::iterator di = cci;
+              ++cci;
+              cs.erase(di);
+            } else {
+            ++cci;
+          };
+        }
+        for (Cand_List::iterator cci = cloned_candidates.begin(); cci != cloned_candidates.end(); /**/ ) {
+          if (cci->has_same_id_as(*ci) || cci->shares_any_hits(*ci))
+            {
+              Cand_List::iterator di = cci;
+              ++cci;
+              cloned_candidates.erase(di);
+            } else {
+            ++cci;
+          };
+        }
+        // push this candidate to end of the confirmed list
+        // so it has priority for accepting new hits
+
+        Cand_List &confirmed = cands[h.lid][0];
+        confirmed.splice(confirmed.end(), cs, ci);
+      }
       if (ci->is_confirmed()) {
+        // dump all hits from this confirmed run
         ci->dump_hits(out_stream, prefix);
-      }
-
-      Cand_Set::iterator di = ci;
-      ++ci;
-      cs.erase(di);
-      continue;
-    }
-
-    // see whether this Tag Candidate can accept this hit
-    DFA_Node * next_state = ci->advance_by_hit(h);
-
-    if (!next_state) {
-      ++ci;
-      continue;
-    }
-
-    // We will be adding the hit to this run candidate. 
-    // If it is unconfirmed, clone it first.
-
-    if (! ci->is_confirmed() && ! ci->next_hit_confirms()) {
-      // clone the candidate, without the added hit
-      cloned_candidates.push_back(*ci);
-    }
-
-    if (ci->add_hit(h, next_state)) {
-      // this run candidate has just been confirmed.
-      // See what candidates should be deleted because they
-      // have the same ID or share any pulses.
-
-      // We check both the main list and the clone list.
-
-      for (Cand_Set::iterator cci = cs.begin(); cci != cs.end(); /**/ ) {
-	if (cci != ci 
-	    && (cci->has_same_id_as(*ci) || cci->shares_any_hits(*ci)))
-	  {
-	    Cand_Set::iterator di = cci;
-	    ++cci;
-	    cs.erase(di);
-	  } else {
-	  ++cci;
-	};
-      }
-      for (Cand_Set::iterator cci = cloned_candidates.begin(); cci != cloned_candidates.end(); /**/ ) {
-	if (cci->has_same_id_as(*ci) || cci->shares_any_hits(*ci))
-	  {
-	    Cand_Set::iterator di = cci;
-	    ++cci;
-	    cloned_candidates.erase(di);
-	  } else {
-	  ++cci;
-	};
-      }
-      // push this candidate to end of the confirmed list
-      // so it has priority for accepting new hits
-
-      Cand_Set::iterator di = ci;
-      if (ci != conf_divider) {
-        cs.splice(conf_divider, cs, ci);
-        ci = di;
-      }
-    }
-    if (ci->is_confirmed()) {
-      // dump all hits from this confirmed run
-      ci->dump_hits(out_stream, prefix);
 	
-      // don't start a new candidate with this pulse
-      start_new_candidate_with_hit = false;
-
-      // don't try to add this pulse to other candidates
-      break;
-    }
-    ++ci;
-  } // continue trying letting other Run_Candidates try this pulse
+        // don't start a new candidate with this pulse
+        confirmed_acceptance = true;
+      }
+      ++ci;
+    } // maybe continue trying letting other Run_Candidates try this pulse
 
     // add any cloned candidates to the end of the list
-  cs.splice(cs.end(), cloned_candidates);
-
+    cs.splice(cs.end(), cloned_candidates);
+  }
   // maybe start a new Run_Candidate with this pulse 
-  if (start_new_candidate_with_hit) {
-    cs.push_back(Run_Candidate(this, G[h.lid].get_root(), h));
+  if (! confirmed_acceptance) {
+    cands[h.lid][1].push_back(Run_Candidate(this, G[h.lid].get_root(), h));
   }
 };
 
@@ -290,31 +286,31 @@ void
 Run_Finder::end_processing() {
   // dump any confirmed candidates which have bursts
 
-  for (Cand_Set_Map::iterator cm = cands.begin(); cm != cands.end(); ++cm) {
+  for (Cand_List_Map::iterator cm = cands.begin(); cm != cands.end(); ++cm) {
 
-    Cand_Set &cs = cm->second;
-    for (Cand_Set::iterator ci = cs.begin(); ci != cs.end(); ++ci ) {
+    Cand_List &cs = cm->second[0];
+    for (Cand_List::iterator ci = cs.begin(); ci != cs.end(); ++ci ) {
       
-      if (ci->is_confirmed()) {
-        // we're about to dump bursts from a particular tag candidate
-        // kill any others which have the same ID or share any pulses
-	  
-        for (Cand_Set::iterator cci = cs.begin(); cci != cs.end(); /**/ ) {
+      /*  NOT NEEDED: only dumping confirmed candidates, which have already
+          caused any other candidates sharing pulses or ID to be dropped
+          // we're about to dump bursts from a particular tag candidate
+          // kill any others which have the same ID or share any pulses
+          for (Cand_List::iterator cci = cs.begin(); cci != cs.end();  ) {
           if (cci != ci
-              && (cci->has_same_id_as(*ci)
-                  || cci->shares_any_hits(*ci)))
-            { 
-              Cand_Set::iterator di = cci;
-              ++cci;
-              cs.erase(di);
-              continue;
-            } else {
-            ++cci;
+          && (cci->has_same_id_as(*ci)
+          || cci->shares_any_hits(*ci)))
+          { 
+          Cand_List::iterator di = cci;
+          ++cci;
+          cs.erase(di);
+          continue;
+          } else {
+          ++cci;
           }
-        }
-        // dump the bursts
-        ci->dump_hits(out_stream, prefix);
-      }
+          }
+      */
+      // dump the bursts
+      ci->dump_hits(out_stream, prefix);
     }
   }
 
