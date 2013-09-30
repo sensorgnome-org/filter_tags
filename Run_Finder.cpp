@@ -29,7 +29,7 @@ Run_Finder::add_tag(Known_Tag * t)
     G.insert(std::pair < Lotek_Tag_ID, DFA_Graph > (lid, DFA_Graph(Run_Candidate::hits_to_confirm_id * 10)));
   G[lid].add_tag(t);
 
-#ifdef FILTER_TAGS_DEBUG
+#ifdef FILTER_TAGS_DEBUG2
   std::cerr << "Adding tag " << t->id << " @ " << t->freq / 1000.0 << std::endl;
 #endif
 
@@ -259,8 +259,10 @@ Run_Finder::process(Hit &h) {
       // so it has priority for accepting new hits
 
       Cand_Set::iterator di = ci;
-      cs.splice(conf_divider, cs, ci);
-      ci = di;
+      if (ci != conf_divider) {
+        cs.splice(conf_divider, cs, ci);
+        ci = di;
+      }
     }
     if (ci->is_confirmed()) {
       // dump all hits from this confirmed run
