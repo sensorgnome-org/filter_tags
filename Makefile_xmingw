@@ -1,0 +1,35 @@
+## Makefile for cross-compiling with mingw under linux; creates windows executable
+
+## 32-bit version uses this tool:
+CXX=i686-w64-mingw32-g++
+
+## 64-bit version uses this tool:
+## CXX=x86_64-w64-mingw32-g++
+
+CPPFLAGS=-Wall -O3 -std=c++0x -ffast-math -ftree-vectorize -static-libgcc -static-libstdc++ 
+
+all: filter_tags
+
+Freq_Setting.o: Freq_Setting.cpp Freq_Setting.hpp filter_tags_common.hpp
+
+DFA_Node.o: DFA_Node.cpp DFA_Node.hpp filter_tags_common.hpp
+
+DFA_Graph.o: DFA_Graph.cpp DFA_Graph.hpp filter_tags_common.hpp
+
+Known_Tag.o: Known_Tag.cpp Known_Tag.hpp filter_tags_common.hpp
+
+Tag_Database.o: Tag_Database.cpp Tag_Database.hpp filter_tags_common.hpp
+
+Hit.o: Hit.cpp Hit.hpp filter_tags_common.hpp
+
+Run_Candidate.o: Run_Candidate.hpp Run_Candidate.cpp Run_Finder.hpp filter_tags_common.hpp
+
+Run_Finder.o: Run_Finder.hpp Run_Finder.cpp Run_Candidate.hpp filter_tags_common.hpp
+
+Run_Foray.o: Run_Foray.hpp Run_Foray.cpp filter_tags_common.hpp
+
+filter_tags.o: filter_tags.cpp filter_tags_common.hpp Freq_Setting.hpp DFA_Node.hpp DFA_Graph.hpp Known_Tag.hpp Tag_Database.hpp Hit.hpp Run_Candidate.hpp Run_Finder.hpp Run_Foray.hpp Hashed_String_Vector.hpp
+
+filter_tags: Freq_Setting.o DFA_Node.o DFA_Graph.o Known_Tag.o Tag_Database.o Hit.o Run_Candidate.o Run_Finder.o filter_tags.o Run_Foray.o
+	$(CXX) $(CPPFLAGS) -o filter_tags.exe $^
+	strip filter_tags.exe
