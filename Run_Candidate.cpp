@@ -118,7 +118,9 @@ void Run_Candidate::dump_hits(ostream *os, string prefix) {
           << ',' << ih->second.dtaline
           << ',' << ih->second.lat
           << ',' << ih->second.lon
-	  << ',' << std::setprecision(6) << ih->second.ant_freq << std::setprecision(4) << std::endl;
+	  << ',' << std::setprecision(6) << ih->second.ant_freq << std::setprecision(4) 
+          << ',' << ih->second.gain
+          << std::endl;
     last_dumped_ts = ih->second.ts;
   }
   clear_hits();
