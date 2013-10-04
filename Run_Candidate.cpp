@@ -52,7 +52,7 @@ bool Run_Candidate::add_hit(const Hit &h, DFA_Node *new_state) {
     Add this hit to the run candidate, given the new state this
     will advance the DFA to.
 
-    Return true if the tag ID has just been confirmed.
+    Return true if adding the hit confirms the tag ID.
 
   */
 

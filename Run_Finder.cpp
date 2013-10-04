@@ -184,7 +184,8 @@ Run_Finder::process(Hit &h) {
     return;
   }
 
-  Cand_List cloned_candidates;
+  // the clone list 
+  Cand_List & cloned_candidates = cands[h.lid][2];
 
   // loop over confirmed then unconfirmed candidates
 
@@ -233,30 +234,23 @@ Run_Finder::process(Hit &h) {
         // this run candidate has just been confirmed.
         // See what candidates should be deleted because they
         // have the same ID or share any pulses.
+        // we check unconfirmed and cloned lists (indices 1 and 2 of cands[h.lid])
 
-        // We check both the main list and the clone list.
+        for (int j = 1; j < NUM_CAND_LISTS; ++j) {
+          Cand_List & ccs = cands[h.lid][j];
+          for (Cand_List::iterator cci = ccs.begin(); cci != ccs.end(); /**/ ) {
+            if (cci != ci 
+                && (cci->has_same_id_as(*ci) || cci->shares_any_hits(*ci)))
+              {
+                Cand_List::iterator di = cci;
+                ++cci;
+                ccs.erase(di);
+              } else {
+              ++cci;
+            };
+          }
+        }
 
-        for (Cand_List::iterator cci = cs.begin(); cci != cs.end(); /**/ ) {
-          if (cci != ci 
-              && (cci->has_same_id_as(*ci) || cci->shares_any_hits(*ci)))
-            {
-              Cand_List::iterator di = cci;
-              ++cci;
-              cs.erase(di);
-            } else {
-            ++cci;
-          };
-        }
-        for (Cand_List::iterator cci = cloned_candidates.begin(); cci != cloned_candidates.end(); /**/ ) {
-          if (cci->has_same_id_as(*ci) || cci->shares_any_hits(*ci))
-            {
-              Cand_List::iterator di = cci;
-              ++cci;
-              cloned_candidates.erase(di);
-            } else {
-            ++cci;
-          };
-        }
         // push this candidate to end of the confirmed list
         // so it has priority for accepting new hits
 
@@ -285,34 +279,16 @@ Run_Finder::process(Hit &h) {
 void
 Run_Finder::end_processing() {
   // dump any confirmed candidates which have bursts
-
+#if 0
   for (Cand_List_Map::iterator cm = cands.begin(); cm != cands.end(); ++cm) {
-
+    // confirmed runs for this tag
     Cand_List &cs = cm->second[0];
     for (Cand_List::iterator ci = cs.begin(); ci != cs.end(); ++ci ) {
-      
-      /*  NOT NEEDED: only dumping confirmed candidates, which have already
-          caused any other candidates sharing pulses or ID to be dropped
-          // we're about to dump bursts from a particular tag candidate
-          // kill any others which have the same ID or share any pulses
-          for (Cand_List::iterator cci = cs.begin(); cci != cs.end();  ) {
-          if (cci != ci
-          && (cci->has_same_id_as(*ci)
-          || cci->shares_any_hits(*ci)))
-          { 
-          Cand_List::iterator di = cci;
-          ++cci;
-          cs.erase(di);
-          continue;
-          } else {
-          ++cci;
-          }
-          }
-      */
       // dump the bursts
       ci->dump_hits(out_stream, prefix);
     }
   }
+#endif
 
   if (tags_not_in_db.size() > 0) {
     std::cerr << "Warning: the following Lotek tag IDs @ " << nom_freq / 1000.0 << " are not in the database:\n";

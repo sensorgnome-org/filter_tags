@@ -1,7 +1,7 @@
 #include "Hit.hpp"
 #include "Run_Foray.hpp"
 
-Hit::Hit(double ts, Lotek_Tag_ID lid, int ant_code, float sig, float lat, float lon, unsigned int dtaline, Frequency_MHz ant_freq, int codeset_id) :
+Hit::Hit(double ts, Lotek_Tag_ID lid, int ant_code, short sig, float lat, float lon, unsigned int dtaline, Frequency_MHz ant_freq, short gain, int codeset_id) :
   ts(ts),
   lid(lid),
   ant_code(ant_code),
@@ -10,6 +10,7 @@ Hit::Hit(double ts, Lotek_Tag_ID lid, int ant_code, float sig, float lat, float 
   lon(lon),
   dtaline(dtaline),
   ant_freq(ant_freq),
+  gain(gain),
   codeset_id(codeset_id)
 { 
   static Seq_No seq_no = 0;
@@ -17,8 +18,8 @@ Hit::Hit(double ts, Lotek_Tag_ID lid, int ant_code, float sig, float lat, float 
   this->seq_no = ++seq_no;
 };
 
-Hit Hit::make(double ts, Lotek_Tag_ID lid, int ant_code, float sig, float lat, float lon, unsigned int dtaline, Frequency_MHz ant_freq, int codeset_id) {
-  return Hit(ts, lid, ant_code, sig, lat, lon, dtaline, ant_freq, codeset_id);
+Hit Hit::make(double ts, Lotek_Tag_ID lid, int ant_code, short sig, float lat, float lon, unsigned int dtaline, Frequency_MHz ant_freq, short gain, int codeset_id) {
+  return Hit(ts, lid, ant_code, sig, lat, lon, dtaline, ant_freq, gain, codeset_id);
 };
 
 void Hit::dump() {

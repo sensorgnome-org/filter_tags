@@ -34,7 +34,7 @@ class Run_Finder {
   */
 
 public:
-  static const int NUM_CAND_LISTS = 2;
+  static const int NUM_CAND_LISTS = 3; // 0 = confirmed, 1 = unconfirmed, 2 = clones
 
   Run_Foray * owner;
 

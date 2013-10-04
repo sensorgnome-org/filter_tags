@@ -22,11 +22,12 @@ Run_Foray::start() {
   char ant_label[MAX_ANT_CODE_SIZE+1];
   int ant_code;
   unsigned int dtaline; // line number in original .DTA file
-  double sig;
+  short sig;
   double lat;
   double lon;
   double freq;
   Nominal_Frequency_kHz nom_freq;
+  short gain;
 
   char codeset[MAX_CODESET_SIZE+1];
   int codeset_id;
@@ -63,9 +64,9 @@ Run_Foray::start() {
 
     ++line_no;
     // lines are like this:
-    // 1374672755.3166,118,1,0,999,999,1345,166.3,"Lotek3"
+    // 1374672755.3166,118,1,45,999,999,1345,166.3,90,"Lotek3"
 
-    if (9 != sscanf(buf, "%lf,%d,\"%[^\"]\",%lf,%lf,%lf,%u,%lf,\"%[^\"]\"", &ts, &lid, ant_label, &sig, &lat, &lon, &dtaline, &freq, codeset)) {
+    if (9 != sscanf(buf, "%lf,%d,\"%[^\"]\",%hd,%lf,%lf,%u,%lf,%hd\"%[^\"]\"", &ts, &lid, ant_label, &sig, &lat, &lon, &dtaline, &freq, &gain, codeset)) {
       std::cerr << "Warning: malformed line in input\n  at line " << line_no << ":\n" << (string("") + buf) << std::endl;
       continue;
     }
@@ -73,7 +74,7 @@ Run_Foray::start() {
     nom_freq = Freq_Setting::get_closest_nominal_freq(freq);
     codeset_id = Run_Foray::codeset_ids.add(std::string(codeset));
 
-    Hit h = Hit::make(ts, lid, ant_code, sig, lat, lon, dtaline, freq, codeset_id);
+    Hit h = Hit::make(ts, lid, ant_code, sig, lat, lon, dtaline, freq, gain, codeset_id);
     run_finders[nom_freq]->process(h);
   }
 
