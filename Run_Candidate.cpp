@@ -95,6 +95,12 @@ void Run_Candidate::clear_hits() {
   hits.clear();
 };
 
+void
+Run_Candidate::output_header(ostream * out) {
+  (*out) << "\"ts\",\"ant\",\"id\",\"tagProj\",\"runID\",\"posInRun\",\"sig\",\"burstSlop\",\"DTAline\",\"lat\",\"lon\",\"antFreq\",\"gain\""
+         << std::endl;
+};
+
 void Run_Candidate::dump_hits(ostream *os, string prefix) {
   // dump all hits in the run so far
 

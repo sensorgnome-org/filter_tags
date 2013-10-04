@@ -99,8 +99,6 @@ public:
 
   void init();
 
-  static void output_header(ostream *out);
-    
   virtual void process (Hit &h);
 
   virtual void end_processing();

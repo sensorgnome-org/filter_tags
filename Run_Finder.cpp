@@ -142,12 +142,6 @@ Run_Finder::init() {
   }
 #endif
 };
-
-void
-Run_Finder::output_header(ostream * out) {
-  (*out) << "\"ts\",\"ant\",\"id\",\"tagProj\",\"runID\",\"posInRun\",\"sig\",\"burstSlop\",\"DTAline\",\"lat\",\"lon\",\"antFreq\""
-         << std::endl;
-};
     
 void
 Run_Finder::process(Hit &h) {
