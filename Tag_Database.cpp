@@ -1,4 +1,5 @@
 #include "Tag_Database.hpp"
+#include <sstream>
 
 Tag_Database::Tag_Database(string filename) {
 
@@ -21,8 +22,9 @@ Tag_Database::Tag_Database(string filename) {
 
     int num_par = sscanf(buf, "\"%[^\"]\",%d,%f,%f", proj, &id, &freq_MHz, &bi);
     if (num_par < 4) {
-      std::cerr << "error at line " << num_lines << " with only " << num_par << " parameters parsed.\n";
-      throw std::runtime_error("Tag file line incomplete or corrupt\n");
+      std::ostringstream msg;
+      msg << "Tag database file incomplete or corrupt at line " << (num_lines+1) << ", with only " << num_par << " parameters parsed successfully.\n";
+      throw std::runtime_error(msg.str());
     }
     ++ num_lines;
     Nominal_Frequency_kHz nom_freq = Freq_Setting::as_Nominal_Frequency_kHz(freq_MHz);
