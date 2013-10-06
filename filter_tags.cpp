@@ -191,30 +191,35 @@ main (int argc, char **argv) {
       hits_filename = string(argv[optind++]);
     }
 
-    // set options and parameters
+    try {
+      // set options and parameters
 
-    Tag_Database tag_db(tagdb_filename);
+      Tag_Database tag_db(tagdb_filename);
 
-    // Freq_Setting needs to know the set of nominal frequencies
-    Freq_Setting::set_nominal_freqs(tag_db.get_nominal_freqs());
+      // Freq_Setting needs to know the set of nominal frequencies
+      Freq_Setting::set_nominal_freqs(tag_db.get_nominal_freqs());
 
-    // open the input stream 
+      // open the input stream 
 
-    std::istream * hits;
-    if (hits_filename.length() > 0) {
-      hits = new ifstream(hits_filename.c_str());
-    } else {
-      hits = & std::cin;
+      std::istream * hits;
+      if (hits_filename.length() > 0) {
+        hits = new ifstream(hits_filename.c_str());
+      } else {
+        hits = & std::cin;
+      }
+
+      if (hits->fail())
+        throw std::runtime_error(string("Couldn't open input file ") + hits_filename);
+
+      if (header_desired)
+        Run_Candidate::output_header(&std::cout);
+
+      Run_Foray foray(& tag_db, hits, & std::cout);
+
+      foray.start();
+    } catch (std::runtime_error e) {
+      std::cerr << e.what();
+      exit(1);
     }
-
-    if (hits->fail())
-      throw std::runtime_error(string("Couldn't open input file ") + hits_filename);
-
-    if (header_desired)
-      Run_Candidate::output_header(&std::cout);
-
-    Run_Foray foray(& tag_db, hits, & std::cout);
-
-    foray.start();
 }
 
