@@ -14,14 +14,14 @@ DFA_Graph::DFA_Graph(unsigned int max_depth) :
 
 void 
 DFA_Graph::add_tag (Known_Tag *t) {
-  // add the tag ID to the root node, and add the known tag
+  // add the tag to the root node, and add the known tag
   // to the list of all tags.
 
   // sanity check: we require all tags have the same Lotek ID
-  if (tags.size() > 0 && tags.begin()->second->get_lotek_ID() != t->get_lotek_ID())
+  if (tags.size() > 0 && (*tags.begin())->lid != t->lid)
     throw std::runtime_error("Internal error: attempt to add tags with different Lotek IDs to the same DFA_Graph!\n");
 
-  tags[t->id] = t;
+  tags.insert(t);
 };
 
 void 
@@ -30,7 +30,7 @@ DFA_Graph::setup_root() {
     // create the root with all known tag IDs in its set
     root = new DFA_Node(0);
     for (auto it = tags.begin(); it != tags.end(); ++it)
-      root->ids.insert(it->first);
+      root->ids.insert(*it);
     N[0][root->ids] = root;
   };
 };

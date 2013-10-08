@@ -39,7 +39,7 @@ Run_Foray::start() {
     Run_Finder * rf = run_finders[*ifs] = new Run_Finder(this, *ifs, "");
     Tag_Set * tgs = tags->get_tags_at_freq(*ifs);
     for (auto it = tgs->begin(); it != tgs->end(); ++it)
-      rf->add_tag(& it->second);
+      rf->add_tag(*it);
   }
 
   Run_Finder::set_out_stream(out);

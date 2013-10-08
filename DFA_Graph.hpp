@@ -13,9 +13,6 @@
 // a type to map sets of tag Ids to DFA nodes
 typedef std::map < Tag_ID_Set, DFA_Node * > Node_Map;
 
-// a type to map individual tag IDs to Known Tags
-typedef std::unordered_map < Tag_ID, Known_Tag * > Tag_Map;
-
 class DFA_Graph {
   // the graph representing a DFA for recognizing sequences of
   // runs from a tag with the same ID and burst interval
@@ -54,9 +51,9 @@ protected:
   // These are collected into a vector, indexed by depth.
   std::vector < Node_Map > N;
 
-  // The set of tags indexed by tag ID
+  // The set of tags for this graph
 
-  Tag_Map tags;
+  Tag_ID_Set tags;
 
 public:
 

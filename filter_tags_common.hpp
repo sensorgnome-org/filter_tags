@@ -33,8 +33,9 @@ static const Lotek_Tag_ID BOGUS_LOTEK_TAG_ID = -1;
 // a set of Lotek tag IDs
 typedef std::unordered_set < Lotek_Tag_ID > Lotek_ID_Set;
 
-typedef int Tag_ID;
-static const Tag_ID BOGUS_TAG_ID = -1;
+class Known_Tag;
+typedef Known_Tag * Tag_ID;
+static const Tag_ID BOGUS_TAG_ID = 0;
 
 // a set of tag IDs;
 typedef std::set< Tag_ID > Tag_ID_Set;

@@ -64,7 +64,7 @@ bool Run_Candidate::add_hit(const Hit &h, DFA_Node *new_state) {
   // does this new burst confirm the tagID ?
 
   if ((! conf_tag) && hits.size() >= hits_to_confirm_id) {
-    conf_tag = owner->owner->tags->get_tag(owner->nom_freq, state->get_ID());
+    conf_tag = owner->owner->tags->get_tag(state->get_ID());
     bi = conf_tag->bi;
     return true;
   }
@@ -75,7 +75,7 @@ Tag_ID Run_Candidate::get_tag_id() {
   // get the ID of the tag associated with this candidate
   // if more than one tag is still compatible, this returns BOGUS_TAG_ID
 
-  return conf_tag ? conf_tag->id : BOGUS_TAG_ID;
+  return conf_tag;
 };
 
 bool Run_Candidate::is_confirmed() {
@@ -97,7 +97,7 @@ void Run_Candidate::clear_hits() {
 
 void
 Run_Candidate::output_header(ostream * out) {
-  (*out) << "\"ts\",\"ant\",\"id\",\"tagProj\",\"runID\",\"posInRun\",\"sig\",\"burstSlop\",\"DTAline\",\"lat\",\"lon\",\"antFreq\",\"gain\""
+  (*out) << "\"ts\",\"ant\",\"id\",\"runID\",\"posInRun\",\"sig\",\"burstSlop\",\"DTAline\",\"lat\",\"lon\",\"antFreq\",\"gain\""
          << std::endl;
 };
 
@@ -115,8 +115,7 @@ void Run_Candidate::dump_hits(ostream *os, string prefix) {
     ++in_a_row;
     (*os) << prefix << std::setprecision(14) << ih->second.ts << std::setprecision(4)
           << ',' << Run_Foray::ant_codes[ih->second.ant_code]
-	  << ',' << conf_tag->id
-          << ",\"" << conf_tag->proj << '"'
+	  << ',' << conf_tag->fullID
 	  << ',' << run_id
 	  << ',' << in_a_row
 	  << ',' << ih->second.sig

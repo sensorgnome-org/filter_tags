@@ -24,7 +24,7 @@ Run_Finder::add_tag(Known_Tag * t)
   if (t->freq != nom_freq) 
     throw std::runtime_error("Internal error: attempt to add tag to Run_Finder on different nominal frequency!\n");
 
-  Lotek_Tag_ID lid = t->get_lotek_ID();
+  Lotek_Tag_ID lid = t->lid;
   if (G.count(lid) == 0)
     G.insert(std::pair < Lotek_Tag_ID, DFA_Graph > (lid, DFA_Graph(Run_Candidate::hits_to_confirm_id * 10)));
   G[lid].add_tag(t);
@@ -83,7 +83,7 @@ Run_Finder::setup_graphs() {
         for (auto i = in->first.begin(); i != in->first.end(); ++i) {
           Tag_ID_Set id;
           id.insert(*i);
-          Gap bi = g.tags[*i]->bi;
+          Gap bi = (*i)->bi;
           for (unsigned int k = 1; k <= max_skipped_bursts + 1; ++k) {
             Gap slop =  burst_slop + burst_slop_expansion * (k - 1);
             m.add(make_pair(interval < Gap > :: closed(bi * k - slop, bi * k + slop), id));
