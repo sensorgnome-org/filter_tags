@@ -121,8 +121,10 @@ void Run_Candidate::dump_hits(ostream *os, string prefix) {
 	  << ',' << ih->second.sig
 	  << ',' << bs
           << ',' << ih->second.dtaline
+          << std::setprecision(9)
           << ',' << ih->second.lat
           << ',' << ih->second.lon
+          << std::setprecision(4)
 	  << ',' << std::setprecision(6) << ih->second.ant_freq << std::setprecision(4) 
           << ',' << ih->second.gain
           << std::endl;
