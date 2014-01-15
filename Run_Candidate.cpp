@@ -113,7 +113,10 @@ void Run_Candidate::dump_hits(ostream *os, string prefix) {
       bs = BOGUS_BURST_SLOP;
     }
     ++in_a_row;
-    (*os) << prefix << std::setprecision(14) << ih->second.ts << std::setprecision(4)
+    (*os) << prefix 
+          << std::setprecision(14)
+          << ih->second.ts 
+          << std::setprecision(4)
           << ',' << Run_Foray::ant_codes[ih->second.ant_code]
 	  << ',' << conf_tag->fullID
 	  << ',' << run_id
@@ -124,8 +127,9 @@ void Run_Candidate::dump_hits(ostream *os, string prefix) {
           << std::setprecision(9)
           << ',' << ih->second.lat
           << ',' << ih->second.lon
-          << std::setprecision(4)
-	  << ',' << std::setprecision(6) << ih->second.ant_freq << std::setprecision(4) 
+          << std::setprecision(6) 
+          << ',' << ih->second.ant_freq 
+          << std::setprecision(4) 
           << ',' << ih->second.gain
           << std::endl;
     last_dumped_ts = ih->second.ts;
