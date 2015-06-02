@@ -16,11 +16,11 @@ Tag_Database::Tag_Database(string filename) {
     if (inf.gcount() == 0)
       break;
     char proj[MAX_LINE_SIZE+1];
-    int id;
+    Lotek_Tag_ID id;
     float freq_MHz;
     float bi;
 
-    int num_par = sscanf(buf, "\"%[^\"]\",%d,%f,%f", proj, &id, &freq_MHz, &bi);
+    int num_par = sscanf(buf, "\"%[^\"]\",%f,%f,%f", proj, &id, &freq_MHz, &bi);
     if (num_par < 4) {
       std::ostringstream msg;
       msg << "Tag database file incomplete or corrupt at line " << (num_lines+1) << ", with only " << num_par << " parameters parsed successfully.\n";
