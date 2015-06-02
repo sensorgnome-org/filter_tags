@@ -37,7 +37,7 @@ Run_Foray.o: Run_Foray.hpp Run_Foray.cpp filter_tags_common.hpp
 filter_tags.o: filter_tags.cpp filter_tags_common.hpp Freq_Setting.hpp DFA_Node.hpp DFA_Graph.hpp Known_Tag.hpp Tag_Database.hpp Hit.hpp Run_Candidate.hpp Run_Finder.hpp Run_Foray.hpp Hashed_String_Vector.hpp
 
 sqlite3.o: sqlite3.c sqlite3.h
-	$(CC) $(SQLITECCFLAGS) -o $@ $<
+	$(CC) -c $(SQLITECCFLAGS) -o $@ $<
 
 filter_tags: Freq_Setting.o DFA_Node.o DFA_Graph.o Known_Tag.o Tag_Database.o Hit.o Run_Candidate.o Run_Finder.o filter_tags.o Run_Foray.o sqlite3.o
 	$(CXX) $(CPPFLAGS) -o filter_tags.exe $^
