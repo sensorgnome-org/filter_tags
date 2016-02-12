@@ -1,4 +1,5 @@
 #include "Tag_Database.hpp"
+#include <sqlite3.h>
 #include <sstream>
 
 Tag_Database::Tag_Database(string filename)
@@ -22,7 +23,7 @@ Tag_Database::populate_from_sqlite_file(string filename) {
 
   sqlite3_stmt * st; //!< pre-compiled statement for recording raw pulses
 
-  if (SQLITE_OK != sqlite3_prepare_v2(db, "select tagID, mfgID, nomFreq, period from tags order by nomFreq, mfgID"
+  if (SQLITE_OK != sqlite3_prepare_v2(db, "select tagID, mfgID, nomFreq, period from tags order by nomFreq, mfgID",
                                       -1, &st, 0)) 
     throw std::runtime_error("Sqlite tag database does not have the required columns: tagID, mfgID, nomFreq, period");
 

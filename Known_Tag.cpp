@@ -10,8 +10,10 @@ Known_Tag::Known_Tag(Lotek_Tag_ID lid, Motus_Tag_ID mid, Nominal_Frequency_kHz f
   bi(bi)
 {
   if (all_motusIDs.count(mid)) {
-    std::cerr << "Warning - duplicate motus ID.\n");
-  all_motusIDs.insert(mid);
+    std::cerr << "Warning - duplicate motus ID.\n";
+  } else {
+    all_motusIDs.insert(mid);
+  }
 };
 
 std::unordered_set < Motus_Tag_ID > 

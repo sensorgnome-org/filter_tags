@@ -19,24 +19,20 @@ public:
   Lotek_Tag_ID          lid;            // Lotek tag ID
   int                   ant_code;       // antenna code 
   short		        sig;		// estimate of hit strength, in lotek units
-  float                 lat;            // latitude, if available
-  float                 lon;            // longitude, if available
   unsigned int          dtaline;        // line in original .DTA source file
   Frequency_MHz         ant_freq;	// frequency to which receiving antenna was tuned
-  short                 gain;           // gain of tuner at time this hit was detected
-  int                   codeset_id;     // code set ID
 
   // additional parameters for algorithmic use
 
   Seq_No	seq_no;     
 
 private:
-  Hit(double ts, Lotek_Tag_ID lid, int ant_code, short sig, float lat, float lon, unsigned int dtaline, Frequency_MHz ant_freq, short gain, int codeset_id);
+  Hit(double ts, Lotek_Tag_ID lid, int ant_code, short sig, unsigned int dtaline, Frequency_MHz ant_freq);
 
 public:
   Hit(){};
 
-  static Hit make(double ts, Lotek_Tag_ID lid, int ant_code, short sig, float lat, float lon, unsigned int dtaline, Frequency_MHz ant_freq, short gain, int codeset_id);
+  static Hit make(double ts, Lotek_Tag_ID lid, int ant_code, short sig, unsigned int dtaline, Frequency_MHz ant_freq);
 
   void dump();
 };

@@ -2,12 +2,11 @@
 #include <stdio.h>
 #include <time.h>
 
-DB_Filer::DB_Filer (const string &out, const string &prog_name, const string &prog_version, double prog_ts, long long bootnum): 
+DB_Filer::DB_Filer (const string &out, const string &prog_name, const string &prog_version, double prog_ts):
   prog_name(prog_name),
   num_runs(0),
   num_hits(0),
-  num_steps(0),
-  bootnum(bootnum)
+  num_steps(0)
 {
   Check(sqlite3_open_v2(out.c_str(),
                         & outdb,
@@ -18,7 +17,7 @@ DB_Filer::DB_Filer (const string &out, const string &prog_name, const string &pr
   string msg = "SQLite output database does not have valid 'batches' table.";
   
   Check( sqlite3_prepare_v2(outdb,
-                            "insert into batches (monoBN, ts) values (?, ?)",
+                            "insert into batches (monoBN, ts) values (-1, ?)",
                             -1,
                             &st_begin_batch,
                             0),
@@ -43,11 +42,11 @@ DB_Filer::DB_Filer (const string &out, const string &prog_name, const string &pr
          msg);
 
   begin_tx();
-  begin_batch(bootnum);
+  begin_batch();
 
   Check(sqlite3_prepare_v2(outdb, 
-                           "insert into hits (runID, ant, ts, sig, sigSD, noise, freq, freqSD, slop, burstSlop) \
-                                    values (?,     ?,   ?,  ?,   ?,     ?,     ?,    ?,      ?,    ?)",
+                           "insert into hits (runID, ant, ts, sig, burstSlop) \
+                                    values (?,     ?,   ?,  ?,   ?)",
                            -1, &st_add_hit, 0),
         "output DB does not have valid 'hits' table.");
 
@@ -163,17 +162,12 @@ DB_Filer::end_run(Run_ID rid, int n) {
 
 
 void
-DB_Filer::add_hit(Run_ID rid, char ant, double ts, float sig, float sigSD, float noise, float freq, float freqSD, float slop, float burstSlop) {
+DB_Filer::add_hit(Run_ID rid, char ant, double ts, float sig, float burstSlop) {
   sqlite3_bind_int64 (st_add_hit, 1, rid);
   sqlite3_bind_int   (st_add_hit, 2, ant-'0');
   sqlite3_bind_double(st_add_hit, 3, ts);
   sqlite3_bind_double(st_add_hit, 4, sig);
-  sqlite3_bind_double(st_add_hit, 5, sigSD);
-  sqlite3_bind_double(st_add_hit, 6, noise);
-  sqlite3_bind_double(st_add_hit, 7, freq);
-  sqlite3_bind_double(st_add_hit, 8, freqSD);
-  sqlite3_bind_double(st_add_hit, 9, slop);
-  sqlite3_bind_double(st_add_hit, 10, burstSlop);
+  sqlite3_bind_double(st_add_hit, 5, burstSlop);
   step_commit(st_add_hit);
   ++ num_hits;
 };
@@ -222,16 +216,15 @@ DB_Filer::Check(int code, int wants, int wants2, int wants3, const std::string &
 
 // start new batch; uses 1 + ID of latest ended batch
 void 
-DB_Filer::begin_batch(long long bootnum) {
+DB_Filer::begin_batch() {
   num_runs = 0;
   num_hits = 0;
 
-  sqlite3_bind_int64(st_begin_batch, 1, bootnum);
 
   // get current time, in GMT
   struct timespec tp;
   clock_gettime(CLOCK_REALTIME, &tp);
-  sqlite3_bind_double(st_begin_batch, 2, tp.tv_sec + 1.0e-9 * tp.tv_nsec);
+  sqlite3_bind_double(st_begin_batch, 1, tp.tv_sec + 1.0e-9 * tp.tv_nsec);
   step_commit(st_begin_batch);
   bid = sqlite3_last_insert_rowid(outdb);
   // set batch ID for "insert run" query

@@ -2,10 +2,9 @@
 
 #include <string.h>
 
-Run_Foray::Run_Foray (Tag_Database * tags, std::istream *data, std::ostream *out) :
+Run_Foray::Run_Foray (Tag_Database * tags, std::istream *data) :
   tags(tags),
   data(data),
-  out(out),
   line_no(0),
   run_finders()
 {
@@ -23,14 +22,8 @@ Run_Foray::start() {
   int ant_code;
   unsigned int dtaline; // line number in original .DTA file
   short sig;
-  double lat;
-  double lon;
   double freq;
   Nominal_Frequency_kHz nom_freq;
-  short gain;
-
-  char codeset[MAX_CODESET_SIZE+1];
-  int codeset_id;
 
   // add a run finder for each nominal frequency
   Freq_Set nf = tags->get_nominal_freqs();
@@ -41,8 +34,6 @@ Run_Foray::start() {
     for (auto it = tgs->begin(); it != tgs->end(); ++it)
       rf->add_tag(*it);
   }
-
-  Run_Finder::set_out_stream(out);
 
   // initialize each run_finder
   for (Freq_Set::iterator ifs = nf.begin(); ifs != nf.end(); ++ifs)
@@ -64,17 +55,17 @@ Run_Foray::start() {
 
     ++line_no;
     // lines are like this:
-    // 1374672755.3166,118,1,45,999,999,1345,166.3,90,"Lotek3"
+    // 1374672755.3166,118,1,123,123423,166.38"
+    // i.e. TS,LotekID,Ant,Sig,DTALine,antFreq"
 
-    if (9 != sscanf(buf, "%lf,%d,\"%[^\"]\",%hd,%lf,%lf,%u,%lf,%hd\"%[^\"]\"", &ts, &lid, ant_label, &sig, &lat, &lon, &dtaline, &freq, &gain, codeset)) {
+    if (6 != sscanf(buf, "%lf,%d,\"%[^\"]\",%hd,%u,%lf", &ts, &lid, ant_label, &sig, &dtaline, &freq)) {
       std::cerr << "Warning: malformed line in input\n  at line " << line_no << ":\n" << (string("") + buf) << std::endl;
       continue;
     }
     ant_code = Run_Foray::ant_codes.add(std::string(ant_label));
     nom_freq = Freq_Setting::get_closest_nominal_freq(freq);
-    codeset_id = Run_Foray::codeset_ids.add(std::string(codeset));
 
-    Hit h = Hit::make(ts, lid, ant_code, sig, lat, lon, dtaline, freq, gain, codeset_id);
+    Hit h = Hit::make(ts, lid, ant_code, sig, dtaline, freq);
     run_finders[nom_freq]->process(h);
   }
 
@@ -84,4 +75,3 @@ Run_Foray::start() {
 };
 
 Hashed_String_Vector Run_Foray::ant_codes = Hashed_String_Vector();
-Hashed_String_Vector Run_Foray::codeset_ids = Hashed_String_Vector();;

@@ -18,7 +18,7 @@ class Run_Foray {
 
 public:
   
-  Run_Foray (Tag_Database * tags, std::istream * data, std::ostream * out);
+  Run_Foray (Tag_Database * tags, std::istream * data);
 
   //  ~Run_Foray ();
 
@@ -31,7 +31,6 @@ protected:
   // settings
 
   std::istream * data; // stream from which data records are read
-  std::ostream * out;  // stream to which tag ID hits are output 
 
   // runtime storage
 
@@ -48,7 +47,6 @@ protected:
 public:
 
   static Hashed_String_Vector ant_codes;
-  static Hashed_String_Vector codeset_ids;
 };
 
 

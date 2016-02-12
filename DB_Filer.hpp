@@ -1,7 +1,8 @@
 #ifndef DB_FILER_HPP
 #define DB_FILER_HPP
 
-#include "find_tags_common.hpp"
+#include "filter_tags_common.hpp"
+
 
 #include <sqlite3.h>
 
@@ -16,17 +17,17 @@ public:
   typedef long long int Run_ID;
   typedef long long int Batch_ID;
 
-  DB_Filer (const string &out, const string &prog_name, const string &prog_version, double prog_ts, long long bootnum=1); // initialize a filer on an existing sqlite database file
+  DB_Filer (const string &out, const string &prog_name, const string &prog_version, double prog_ts); // initialize a filer on an existing sqlite database file
   ~DB_Filer (); // write summary data
 
   Run_ID begin_run(Motus_Tag_ID mid); // begin run of tag
   void end_run(Run_ID rid, int n); // end run, noting number of hits
 
-  void add_hit(Run_ID rid, char ant, double ts, float sig, float sigSD, float noise, float freq, float freqSD, float slop, float burstSlop);
+  void add_hit(Run_ID rid, char ant, double ts, float sig, float burstSlop);
 
   void add_param(const string &name, double val); // record a program parameter value
 
-  void begin_batch(long long bootnum); // start new batch; uses 1 + ID of latest ended batch
+  void begin_batch(); // start new batch; uses 1 + ID of latest ended batch
 
   void end_batch(); //!< end current batch
 

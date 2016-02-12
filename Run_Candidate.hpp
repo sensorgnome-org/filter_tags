@@ -10,6 +10,7 @@
 #include "Hit.hpp"
 #include "Freq_Setting.hpp"
 #include "Known_Tag.hpp"
+#include "DB_Filer.hpp"
 
 class Run_Finder;
 
@@ -26,18 +27,24 @@ private:
   Timestamp           last_ts;        // timestamp of last burst
   Timestamp           last_dumped_ts; // timestamp of last dumped burst (used to calculate burst slop when dumping)
   Known_Tag           *conf_tag;      // when confirmed, a pointer to the tag. else 0
-  unsigned int        in_a_row;       // counter of bursts in this run
+  unsigned int        hit_count;       // counter of bursts in this run
   Gap                 bi;             // the burst interval, in seconds, for this tag
+
+  DB_Filer::Run_ID	run_id;	// ID for the run formed by hits from this candidate (i.e. consecutive in-phase hits on a tag)
 
   static const float BOGUS_BURST_SLOP; // burst slop reported for first burst of run (where we don't have a previous burst)  Doesn't really matter, since we can distinguish this situation in the data by "pos.in.run==1"
 
-public:
+  static DB_Filer * filer;
 
-  unsigned long long  run_id;         // unique ID for this run
+  friend class Run_Finder;
+
+public:
 
   static unsigned int hits_to_confirm_id; // how many hits must be seen before an ID level moves to confirmed?  
  
   Run_Candidate(Run_Finder *owner, DFA_Node *state, const Hit &h);
+
+  ~Run_Candidate();
 
   bool has_same_id_as(Run_Candidate &tf);
 
@@ -60,6 +67,8 @@ public:
   static void output_header(ostream *out);
     
   void dump_hits(ostream *os, string prefix="");
+
+  static void set_filer(DB_Filer *dbf);
 
   static void set_hits_to_confirm_id(unsigned int n);
 };

@@ -99,9 +99,25 @@ Run_Finder::setup_graphs() {
       }
     }
 
-    // sanity check: for each node at max depth, ensure there's only one tag ID left
+    // sanity check: for each node at max depth, ensure there's only one tag ID left; record ambiguities
     if (have_nonsingleton_leaves) {
-      std::cerr << "Warning: some tags with lotek ID " << ig->first << " @ " << nom_freq / 1000.0 << " are not distinguishable.\n";
+      Node_Map & nm = g.N[g.max_depth - 1];
+
+      // loop over each node at this depth
+      for (auto it = nm.begin(); it != nm.end(); ++it) {
+        if (it->first.size() > 1) {
+          auto i = it->first.begin();
+          auto id = (*i)->mid;
+          ++i;
+          for ( ; i != it->first.end(); ++i) {
+            Run_Candidate::filer->add_ambiguity(id, (*i)->mid);
+          }
+        // we delete all but the first tag in the ambiguity group
+        i = it->second->ids.begin();
+        ++i;
+        it->second->ids.erase(i, it->second->ids.end());
+        }
+      }
     } else {
 #ifdef FILTER_TAGS_DEBUG
       std::cerr <<"All tags with Lotek ID " << ig->first << " @ " << nom_freq / 1000.0 << " can be distinguished after at most " << depth << " bursts.\n";

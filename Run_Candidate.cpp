@@ -9,14 +9,18 @@ Run_Candidate::Run_Candidate (Run_Finder *owner, DFA_Node *state, const Hit &h) 
   last_ts(h.ts),
   last_dumped_ts(BOGUS_TIMESTAMP),
   conf_tag(0),
-  in_a_row(0),
+  hit_count(0),
   bi(0.0)
 {
-  static unsigned long long run_id_counter = 0;
-
-  run_id = ++run_id_counter;
   hits[h.seq_no] = h;
 };
+
+Run_Candidate::~Run_Candidate() {
+  if (hit_count > 0) {
+    filer -> end_run(run_id, hit_count);
+  }
+};
+
 
 bool Run_Candidate::has_same_id_as(Run_Candidate &tf) {
   Tag_ID id = get_tag_id();
@@ -95,16 +99,14 @@ void Run_Candidate::clear_hits() {
   hits.clear();
 };
 
-void
-Run_Candidate::output_header(ostream * out) {
-  (*out) << "\"ts\",\"ant\",\"id\",\"runID\",\"posInRun\",\"sig\",\"burstSlop\",\"DTAline\",\"lat\",\"lon\",\"antFreq\",\"gain\""
-         << std::endl;
-};
-
 void Run_Candidate::dump_hits(ostream *os, string prefix) {
   // dump all hits in the run so far
 
   for (Hits_Iter ih = hits.begin(); ih != hits.end(); ++ih) {
+    if (++hit_count == 1) {
+      // first hit, so start a run
+      run_id = filer->begin_run(conf_tag->mid);
+    }
     double bs;
     if (last_dumped_ts != BOGUS_TIMESTAMP) {
       double gap = ih->second.ts - last_dumped_ts;
@@ -112,26 +114,13 @@ void Run_Candidate::dump_hits(ostream *os, string prefix) {
     } else {
       bs = BOGUS_BURST_SLOP;
     }
-    ++in_a_row;
-    (*os) << prefix 
-          << std::setprecision(14)
-          << ih->second.ts 
-          << std::setprecision(4)
-          << ',' << Run_Foray::ant_codes[ih->second.ant_code]
-	  << ',' << conf_tag->fullID
-	  << ',' << run_id
-	  << ',' << in_a_row
-	  << ',' << ih->second.sig
-	  << ',' << bs
-          << ',' << ih->second.dtaline
-          << std::setprecision(9)
-          << ',' << ih->second.lat
-          << ',' << ih->second.lon
-          << std::setprecision(6) 
-          << ',' << ih->second.ant_freq 
-          << std::setprecision(4) 
-          << ',' << ih->second.gain
-          << std::endl;
+    filer->add_hit(
+                   run_id, 
+                   Run_Foray::ant_codes[ih->second.ant_code].at(0),
+                   ih->second.ts,
+                   ih->second.sig,
+                   bs
+                   );
     last_dumped_ts = ih->second.ts;
   }
   clear_hits();
@@ -141,6 +130,13 @@ void Run_Candidate::set_hits_to_confirm_id(unsigned int n) {
   hits_to_confirm_id = n;
 };
 
+void
+Run_Candidate::set_filer(DB_Filer *dbf) {
+  filer = dbf;
+};
+
 unsigned int Run_Candidate::hits_to_confirm_id = 2; // default to at least 2 bursts required; choosing 1 would make filtering a NO-OP
 
 const float Run_Candidate::BOGUS_BURST_SLOP = 0.0; // burst slop reported for first burst of ru
+
+DB_Filer * Run_Candidate::filer = 0; // handle to output filer
