@@ -7,7 +7,10 @@
 ## CPPFLAGS=-Wall -DFILTER_TAGS_DEBUG -g3 -std=c++0x $(PROFILING)
 
 ## PRODUCTION FLAGS:
-CPPFLAGS=-Wall -O3 -std=c++0x $(PROFILING)
+CPPFLAGS=-Wall -O3 -std=c++0x $(PROFILING) -DPROGRAM_VERSION=$(PROGRAM_VERSION) -DPROGRAM_BUILD_TS=$(PROGRAM_BUILD_TS)
+LDFLAGS=-lsqlite3 -lrt
+PROGRAM_VERSION=\""$(shell git describe)\""
+PROGRAM_BUILD_TS=$(shell date +%s)
 
 
 all: filter_tags
@@ -16,6 +19,8 @@ clean:
 	rm -f *.o filter_tags
 
 Freq_Setting.o: Freq_Setting.cpp Freq_Setting.hpp filter_tags_common.hpp
+
+DB_Filer.o: DB_Filer.cpp filter_tags_common.hpp
 
 DFA_Node.o: DFA_Node.cpp DFA_Node.hpp filter_tags_common.hpp
 
@@ -36,4 +41,8 @@ Run_Foray.o: Run_Foray.hpp Run_Foray.cpp filter_tags_common.hpp
 filter_tags.o: filter_tags.cpp filter_tags_common.hpp Freq_Setting.hpp DFA_Node.hpp DFA_Graph.hpp Known_Tag.hpp Tag_Database.hpp Hit.hpp Run_Candidate.hpp Run_Finder.hpp Run_Foray.hpp Hashed_String_Vector.hpp
 
 filter_tags: Freq_Setting.o DFA_Node.o DFA_Graph.o Known_Tag.o Tag_Database.o Hit.o Run_Candidate.o Run_Finder.o filter_tags.o Run_Foray.o
-	g++ $(PROFILING) -o filter_tags $^
+	g++ $(PROFILING) -o filter_tags $^ $(LDFLAGS)
+
+
+filter_tags_motus: Freq_Setting.o DB_Filer.o DFA_Node.o DFA_Graph.o Known_Tag.o Tag_Database.o Hit.o Run_Candidate.o Run_Finder.o filter_tags_motus.o Run_Foray.o
+	g++ $(PROFILING) -o filter_tags $^ $(LDFLAGS)
