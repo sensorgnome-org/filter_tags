@@ -39,6 +39,6 @@ filter_tags.o: filter_tags.cpp filter_tags_common.hpp Freq_Setting.hpp DFA_Node.
 sqlite3.o: sqlite3.c sqlite3.h
 	$(CC) -c $(SQLITECCFLAGS) -o $@ $<
 
-filter_tags: Freq_Setting.o DFA_Node.o DFA_Graph.o Known_Tag.o Tag_Database.o Hit.o Run_Candidate.o Run_Finder.o filter_tags.o Run_Foray.o sqlite3.o
+filter_tags: Freq_Setting.o DFA_Node.o DFA_Graph.o Known_Tag.o Tag_Database.o Hit.o Run_Candidate.o Run_Finder.o filter_tags.o Run_Foray.o
 	$(CXX) $(CPPFLAGS) -o filter_tags.exe $^
 	strip filter_tags.exe
