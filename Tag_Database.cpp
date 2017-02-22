@@ -54,5 +54,3 @@ Known_Tag *
 Tag_Database::get_tag(Tag_ID id) {
   return id;
 };
-  
-

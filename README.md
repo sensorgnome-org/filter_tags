@@ -1,6 +1,6 @@
 # filter_tags
 
-** Most motus users do NOT need this. **
+**Most motus users do NOT need this.**
 
 Filter a stream of (Lotek tagID, timestamp) pairs given a database of known
 (Lotek tagID, burstInterval) pairs.  This code supports end-user filtering of
