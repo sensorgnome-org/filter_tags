@@ -7,7 +7,8 @@ CC=i686-w64-mingw32-gcc
 ## 64-bit version uses this tool:
 ## CXX=x86_64-w64-mingw32-g++
 
-CPPFLAGS=-Wall -O3 -std=c++0x -ffast-math -ftree-vectorize -static-libgcc -static-libstdc++ 
+##CPPFLAGS=-DFILTER_TAGS_DEBUG_2 -Wall -O3 -std=c++0x -ffast-math -ftree-vectorize -static-libgcc -static-libstdc++
+CPPFLAGS=-Wall -O3 -std=c++0x -ffast-math -ftree-vectorize -static-libgcc -static-libstdc++
 CCFLAGS=-Wall -O3 -ffast-math -ftree-vectorize -static-libgcc
 SQLITECCFLAGS=-Wall -O3 -ftree-vectorize -static-libgcc
 
