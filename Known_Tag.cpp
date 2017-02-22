@@ -11,7 +11,7 @@ Known_Tag::Known_Tag(Lotek_Tag_ID lid, string proj, Nominal_Frequency_kHz freq, 
 {
   // generate a full ID string  Proj#Lid@NOMFREQ:BI
   std::ostringstream fid;
-  fid << proj << '#' << lid << '@' << std::setprecision(6) << freq / 1000.0 << ':' << round(10 * bi) / 10;
+  fid << proj << '#' << std::setprecision(4) << lid << '@' << std::setprecision(6) << freq / 1000.0 << ':' << round(10 * bi) / 10;
   fullID = fid.str();
   if (all_fullIDs.count(fullID)) {
     std::cerr << "Warning - two very similar tags in project " << proj << ":\nLotek ID: " << lid << "; frequency: " << freq << " MHz; burst interval: " << round(10 * bi) / 10 << " sec\nAppending '!' to fullID of second one.\n";
