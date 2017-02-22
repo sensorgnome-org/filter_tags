@@ -3,7 +3,7 @@
 **Most motus users do NOT need this.**
 
 Filter a stream of (Lotek tagID, timestamp) pairs given a database of known
-(Lotek tagID, burstInterval) pairs.  This code supports end-user filtering of
+(Lotek tagID, burstInterval) pairs.  This code supports filtering of
 Lotek .DTA files by users of their receivers.
 
 
