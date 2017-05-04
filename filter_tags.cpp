@@ -43,9 +43,9 @@
 #include "Run_Candidate.hpp"
 #include "Run_Foray.hpp"
 
-//#define FILTER_TAGS_DEBUG 
+//#define FILTER_TAGS_DEBUG
 
-void 
+void
 usage() {
   puts (
 	"Usage:\n"
@@ -80,7 +80,7 @@ usage() {
         "     lon     - if available, NA otherwise - this field is treated as a string\n"
         "     antfreq - antenna listening frequency, in MHz\n"
         "     codeset - factor - Lotek codset name - this field is treated as a string\n\n"
-        
+
 	"    If unspecified, tag hits are read from stdin\n\n"
 
 	"and OPTIONS can be any of:\n\n"
@@ -116,6 +116,18 @@ usage() {
 	"    between them.\n"
 	"    default: 60\n\n"
 
+        "-t, --timestamp-wonkiness=N\n"
+        "    deal with possible integer clock steps of magnitude up to N.  It appears\n"
+        "    that .DTA files sometimes embody a clock being stepped by +/- 1 seconds.\n"
+        "    The symptom is that the observed burst intervals for a tag appears include\n"
+        "    BI + 1.000 and BI - 1.000, rather than just BI.  Specifying a positive non-zero\n"
+        "    value for N allows for the possibility that the burst interval might take any\n"
+        "    of the integer values BI - N, ..., BI - 1, BI, BI + 1, ..., BI + N\n"
+        "    Default: 0, which ignores the registered burst interval to match as-is.\n\n"
+        "    Note: the algorithm keeps track of accumulated BI deficit, so will not allow\n"
+        "    a sequence of observed BIs like (BI - 1, BI - 1, BI - 1, ...) which is clearly\n"
+        "    from another tag\n\n"
+
 	);
 }
 
@@ -128,11 +140,12 @@ main (int argc, char **argv) {
         COMMAND_HELP	         = 'h',
 	OPT_HEADER_ONLY	         = 'H',
 	OPT_NO_HEADER	         = 'n',
-	OPT_MAX_SKIPPED_BURSTS   = 'S'
+	OPT_MAX_SKIPPED_BURSTS   = 'S',
+        OPT_TIMESTAMP_WONKINESS  = 't',
     };
 
     int option_index;
-    static const char short_options[] = "b:B:c:hHnS:";
+    static const char short_options[] = "b:B:c:hHnS:t:";
     static const struct option long_options[] = {
         {"burst-slop"		   , 1, 0, OPT_BURST_SLOP},
         {"burst-slop-expansion"    , 1, 0, OPT_BURST_SLOP_EXPANSION},
@@ -141,6 +154,7 @@ main (int argc, char **argv) {
 	{"header-only"		   , 0, 0, OPT_HEADER_ONLY},
 	{"no-header"		   , 0, 0, OPT_NO_HEADER},
 	{"max-skipped-bursts"      , 1, 0, OPT_MAX_SKIPPED_BURSTS},
+        {"timestamp-wonkiness"     , 1, 0, OPT_TIMESTAMP_WONKINESS},
         {0, 0, 0, 0}
     };
 
@@ -150,6 +164,7 @@ main (int argc, char **argv) {
     string hits_filename = "";
 
     bool header_desired = true;
+    unsigned int timestamp_wonkiness = 0;
 
     while ((c = getopt_long(argc, argv, short_options, long_options, &option_index)) != -1) {
         switch (c) {
@@ -174,6 +189,12 @@ main (int argc, char **argv) {
 	case OPT_MAX_SKIPPED_BURSTS:
 	  Run_Finder::set_default_max_skipped_bursts(atoi(optarg));
 	  break;
+	case OPT_TIMESTAMP_WONKINESS:
+          timestamp_wonkiness = atoi(optarg);
+          if (timestamp_wonkiness < 0)
+            throw std::runtime_error("timestamp_wonkiness (-t) must be non-negative");
+          Run_Finder::set_timestamp_wonkiness(timestamp_wonkiness);
+          break;
         default:
             usage();
             exit(1);
@@ -199,7 +220,7 @@ main (int argc, char **argv) {
       // Freq_Setting needs to know the set of nominal frequencies
       Freq_Setting::set_nominal_freqs(tag_db.get_nominal_freqs());
 
-      // open the input stream 
+      // open the input stream
 
       std::istream * hits;
       if (hits_filename.length() > 0) {
@@ -222,4 +243,3 @@ main (int argc, char **argv) {
       exit(1);
     }
 }
-

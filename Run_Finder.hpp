@@ -73,6 +73,15 @@ public:
   unsigned int max_skipped_bursts;
   static unsigned int default_max_skipped_bursts;
 
+  // by how many integer seconds can the clock jump (up or down)?
+  // .DTA files show evidence of +/-1 s jumps, presumably due
+  // to something like the integer portion of the clock being
+  // set directly to a GPS timestamp, while leaving the fractional
+  // part as-is.  Of course, it could be happening somewhere in
+  // the software that generates .DTA files...
+
+  static unsigned int timestamp_wonkiness;
+
   // output parameters
 
   static ostream * out_stream;
@@ -96,6 +105,8 @@ public:
   static void set_default_max_skipped_bursts(unsigned int skip);
 
   static void set_out_stream(ostream *os);
+
+  static void set_timestamp_wonkiness(unsigned int wonk);
 
   void init();
 

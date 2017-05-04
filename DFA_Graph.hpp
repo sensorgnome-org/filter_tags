@@ -35,7 +35,7 @@ public:
 
 protected:
   // the max depth of this graph
-  
+
   unsigned int max_depth;
 
   // the root node, where any DFA begins its life

@@ -1,7 +1,7 @@
 #include "Run_Finder.hpp"
 
 Run_Finder::Run_Finder (Run_Foray *owner) :
-  owner(owner) 
+  owner(owner)
 {
 };
 
@@ -18,10 +18,10 @@ Run_Finder::Run_Finder (Run_Foray *owner, Nominal_Frequency_kHz nom_freq, string
 {
 };
 
-void 
+void
 Run_Finder::add_tag(Known_Tag * t)
 {
-  if (t->freq != nom_freq) 
+  if (t->freq != nom_freq)
     throw std::runtime_error("Internal error: attempt to add tag to Run_Finder on different nominal frequency!\n");
 
   Lotek_Tag_ID lid = t->lid;
@@ -45,7 +45,7 @@ Run_Finder::setup_graphs() {
 
   // The graphs have already had their root nodes created by calling add_tag
   // for each tag on this Run_Finder's frequency.
-  
+
   // For depth up to Run_Candidate::hits_to_confirm_id, add appropriate nodes to the graph.
   // This is done breadth-first, but non-recursively because the DFA_Graph
   // class keeps a vector of nodes at each phase.
@@ -77,7 +77,7 @@ Run_Finder::setup_graphs() {
 
         // for each tag in this node, add edges for fuzzified
         // multiples of its burst interval
-	  
+
         have_nonsingleton_leaves |= in->first.size() > 1;
 
         for (auto i = in->first.begin(); i != in->first.end(); ++i) {
@@ -87,6 +87,13 @@ Run_Finder::setup_graphs() {
           for (unsigned int k = 1; k <= max_skipped_bursts + 1; ++k) {
             Gap slop =  burst_slop + burst_slop_expansion * (k - 1);
             m.add(make_pair(interval < Gap > :: closed(bi * k - slop, bi * k + slop), id));
+            if (timestamp_wonkiness) {
+              // add additional edges for BI which are off by +/-1, +/-2, ... seconds due to clock steps
+              for (unsigned int tw = 1; tw <= timestamp_wonkiness; ++tw) {
+                m.add(make_pair(interval < Gap > :: closed(bi * k - slop + tw, bi * k + slop + tw), id));
+                m.add(make_pair(interval < Gap > :: closed(bi * k - slop - tw, bi * k + slop - tw), id));
+              }
+            }
           }
         }
 
@@ -94,7 +101,7 @@ Run_Finder::setup_graphs() {
         // PULSES_PER_BURST-1 are linked back to pulses at phase
         // PULSES_PER_BURST-1, so that we can keep track of runs of
         // consecutive bursts from a tag
-      
+
         g.grow(in->second, m, (in->first.size() > 1 && depth < Run_Candidate::hits_to_confirm_id - 1) ? depth + 1 : depth);
       }
     }
@@ -132,6 +139,11 @@ Run_Finder::set_out_stream(ostream * os) {
 };
 
 void
+Run_Finder::set_timestamp_wonkiness(unsigned int wonk) {
+  timestamp_wonkiness = wonk;
+};
+
+void
 Run_Finder::init() {
   setup_graphs();
 #ifdef FILTER_TAGS_DEBUG_2
@@ -142,32 +154,32 @@ Run_Finder::init() {
   }
 #endif
 };
-    
+
 void
 Run_Finder::process(Hit &h) {
-  /* 
-     Process one tag hit from the input stream.  
+  /*
+    Process one tag hit from the input stream.
 
-     - destroy existing Run_Candidates which are too old, given the 
-     "now" represented by this pulse's timestamp
-    
-     - for each remaining Run_Candidate, see whether hit pulse can be added
-     (i.e. is compatible with an edge out of the DFA's current state,	and
-     has sufficiently similar frequency offset)
+    - destroy existing Run_Candidates which are too old, given the
+    "now" represented by this pulse's timestamp
 
-     - if so, check whether the pulse confirms the Run_Candidate:
+    - for each remaining Run_Candidate, see whether hit pulse can be added
+    (i.e. is compatible with an edge out of the DFA's current state,	and
+    has sufficiently similar frequency offset)
 
-     - if so, kill any other Run_Candidates with the same ID
+    - if so, check whether the pulse confirms the Run_Candidate:
 
-     - otherwise, if the hit was added to the candidate, but the candidate
-     was unconfirmed before the addition, clone the original
-     Run_Candidate (i.e. the one without the added hit)
+    - if so, kill any other Run_Candidates with the same ID
 
-     - if this run candidate is confirmed, and a hit was added,
-     dump any hits so far
+    - otherwise, if the hit was added to the candidate, but the candidate
+    was unconfirmed before the addition, clone the original
+    Run_Candidate (i.e. the one without the added hit)
 
-     - if this hit didn't confirm any run candidate, then start a new
-     Run_Candidate with this hit
+    - if this run candidate is confirmed, and a hit was added,
+    dump any hits so far
+
+    - if this hit didn't confirm any run candidate, then start a new
+    Run_Candidate with this hit
   */
 
   if (h.lid == 999)
@@ -178,13 +190,13 @@ Run_Finder::process(Hit &h) {
     return;
   }
 
-  // the clone list 
+  // the clone list
   Cand_List & cloned_candidates = cands[h.lid][2];
 
   // loop over confirmed then unconfirmed candidates
 
   bool confirmed_acceptance = false; // has hit been accepted by a confirmed candidate?
- 
+
   for (int i = 0; i < NUM_CAND_LISTS && ! confirmed_acceptance; ++i) {
     // unless this hit is used to confirm a run candidate (in which case it's
     // very likely to be part of that tag) we will start a new run candidate with it
@@ -213,10 +225,10 @@ Run_Finder::process(Hit &h) {
         ++ci;
         continue;
       }
-      
+
       confirmed_acceptance = ci->is_confirmed();
 
-      // We will be adding the hit to this run candidate. 
+      // We will be adding the hit to this run candidate.
       // If it is unconfirmed, clone it first.
 
       if (! ci->is_confirmed() && ! ci->next_hit_confirms()) {
@@ -233,7 +245,7 @@ Run_Finder::process(Hit &h) {
         for (int j = 1; j < NUM_CAND_LISTS; ++j) {
           Cand_List & ccs = cands[h.lid][j];
           for (Cand_List::iterator cci = ccs.begin(); cci != ccs.end(); /**/ ) {
-            if (cci != ci 
+            if (cci != ci
                 && (cci->has_same_id_as(*ci) || cci->shares_any_hits(*ci)))
               {
                 Cand_List::iterator di = cci;
@@ -254,7 +266,7 @@ Run_Finder::process(Hit &h) {
       if (ci->is_confirmed()) {
         // dump all hits from this confirmed run
         ci->dump_hits(out_stream, prefix);
-	
+
         // don't start a new candidate with this pulse
         confirmed_acceptance = true;
       }
@@ -264,7 +276,7 @@ Run_Finder::process(Hit &h) {
     // add any cloned candidates to the end of the list
     cs.splice(cs.end(), cloned_candidates);
   }
-  // maybe start a new Run_Candidate with this pulse 
+  // maybe start a new Run_Candidate with this pulse
   if (! confirmed_acceptance) {
     cands[h.lid][1].push_back(Run_Candidate(this, G[h.lid].get_root(), h));
   }
@@ -289,12 +301,12 @@ Run_Finder::end_processing() {
     for (auto id = tags_not_in_db.begin(); id != tags_not_in_db.end(); ++id)
       std::cerr << *id << '\n';
   }
-      
+
 };
 
 Gap Run_Finder::default_burst_slop = 0.010; // 10 ms
 Gap Run_Finder::default_burst_slop_expansion = 0.001; // 1ms = 1 part in 10000 for 10s BI
 unsigned int Run_Finder::default_max_skipped_bursts = 60;
+unsigned int Run_Finder::timestamp_wonkiness = 0;
 
 ostream * Run_Finder::out_stream = 0;
-

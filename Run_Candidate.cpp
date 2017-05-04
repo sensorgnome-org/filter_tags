@@ -6,6 +6,7 @@ Run_Candidate::Run_Candidate (Run_Finder *owner, DFA_Node *state, const Hit &h) 
   owner(owner),
   state(state),
   hits(),
+  first_ts(0),
   last_ts(h.ts),
   last_dumped_ts(BOGUS_TIMESTAMP),
   conf_tag(0),
@@ -27,7 +28,7 @@ bool Run_Candidate::shares_any_hits(Run_Candidate &tf) {
   // does this tag candidate use any of the hits
   // from a run accepted by another tag filter?
 
-  
+
   for (Hit_Buffer::iterator ihit = tf.hits.begin(); ihit != tf.hits.end(); ++ihit)
     if (hits.count(ihit->first))
       return true;
@@ -41,9 +42,31 @@ bool Run_Candidate::is_too_old_given_hit_time(const Hit &h) {
 DFA_Node * Run_Candidate::advance_by_hit(const Hit &h) {
 
   Gap gap = h.ts - last_ts;
-	  
+
   // try walk the DFA with this gap
-  return state->next(gap);
+  DFA_Node * rv = state->next(gap);
+  if (! rv ||  ! Run_Finder::timestamp_wonkiness || ! first_ts || ! conf_tag)
+    return rv;
+
+  // we've been allowing for clock jumps, but we don't want them to be
+  // biased in one direction, which would allow a tag with a different
+  // BI to be falsely detected.  So verify that adding this hit won't
+  // result in a total time wonkiness for this run of more than
+  // Run_Finder::timestamp_wonkiness in absolute value.  Note: this
+  // test will fail if the tag's burst interval is smaller than
+  // Run_Finder::timestamp_wonkiness!!
+
+  int num_bursts = round((h.ts - first_ts) / conf_tag->bi);
+
+  if (round(abs((h.ts - first_ts) - num_bursts * conf_tag->bi)) <= Run_Finder::timestamp_wonkiness)
+    return rv;
+
+  // too much wonkiness, so don't accept this hit.
+#ifdef DEBUG
+  std::cerr << std::setprecision(14) << "rejecting burst at " << h.ts << " with first at " << first_ts << " num_bursts=" << num_bursts << " and bi = " << conf_tag->bi << std::endl;
+#endif
+  return 0;
+
 }
 
 bool Run_Candidate::add_hit(const Hit &h, DFA_Node *new_state) {
@@ -58,9 +81,11 @@ bool Run_Candidate::add_hit(const Hit &h, DFA_Node *new_state) {
 
   hits[h.seq_no] = h;
   last_ts = h.ts;
+  if (first_ts == 0)
+    first_ts = h.ts;
 
   state = new_state;
-      
+
   // does this new burst confirm the tagID ?
 
   if ((! conf_tag) && hits.size() >= hits_to_confirm_id) {
@@ -82,7 +107,7 @@ bool Run_Candidate::is_confirmed() {
   return conf_tag != 0;
 };
 
-bool 
+bool
 Run_Candidate::next_hit_confirms() {
   return conf_tag == 0 && hits.size() == hits_to_confirm_id - 1;
 };
@@ -113,9 +138,9 @@ void Run_Candidate::dump_hits(ostream *os, string prefix) {
       bs = BOGUS_BURST_SLOP;
     }
     ++in_a_row;
-    (*os) << prefix 
+    (*os) << prefix
           << std::setprecision(14)
-          << ih->second.ts 
+          << ih->second.ts
           << std::setprecision(4)
           << ',' << Run_Foray::ant_codes[ih->second.ant_code]
 	  << ',' << conf_tag->fullID
@@ -127,9 +152,9 @@ void Run_Candidate::dump_hits(ostream *os, string prefix) {
           << std::setprecision(9)
           << ',' << ih->second.lat
           << ',' << ih->second.lon
-          << std::setprecision(6) 
-          << ',' << ih->second.ant_freq 
-          << std::setprecision(4) 
+          << std::setprecision(6)
+          << ',' << ih->second.ant_freq
+          << std::setprecision(4)
           << ',' << ih->second.gain
           << std::endl;
     last_dumped_ts = ih->second.ts;
