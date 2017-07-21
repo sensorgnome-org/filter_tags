@@ -29,7 +29,6 @@ private:
   Known_Tag           *conf_tag;      // when confirmed, a pointer to the tag. else 0
   unsigned int        in_a_row;       // counter of bursts in this run
   Gap                 bi;             // the burst interval, in seconds, for this tag
-  int                 timejump;       // accumulated observed jump in clock; this is required to be
 
   static const float BOGUS_BURST_SLOP; // burst slop reported for first burst of run (where we don't have a previous burst)  Doesn't really matter, since we can distinguish this situation in the data by "pos.in.run==1"
 
