@@ -8,7 +8,7 @@
 
 ## PRODUCTION FLAGS:
 CPPFLAGS=-Wall -O3 -std=c++0x $(PROFILING)
-
+CXX := g++
 
 all: filter_tags
 
@@ -36,4 +36,4 @@ Run_Foray.o: Run_Foray.hpp Run_Foray.cpp filter_tags_common.hpp
 filter_tags.o: filter_tags.cpp filter_tags_common.hpp Freq_Setting.hpp DFA_Node.hpp DFA_Graph.hpp Known_Tag.hpp Tag_Database.hpp Hit.hpp Run_Candidate.hpp Run_Finder.hpp Run_Foray.hpp Hashed_String_Vector.hpp
 
 filter_tags: Freq_Setting.o DFA_Node.o DFA_Graph.o Known_Tag.o Tag_Database.o Hit.o Run_Candidate.o Run_Finder.o filter_tags.o Run_Foray.o
-	g++ $(PROFILING) -o filter_tags $^
+	$(CXX) $(PROFILING) -o filter_tags $^
