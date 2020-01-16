@@ -238,7 +238,7 @@ main (int argc, char **argv) {
       Run_Foray foray(& tag_db, hits, & std::cout);
 
       foray.start();
-    } catch (std::runtime_error e) {
+    } catch (std::runtime_error& e) {
       std::cerr << e.what();
       exit(1);
     }
